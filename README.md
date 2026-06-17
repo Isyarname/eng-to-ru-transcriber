@@ -68,7 +68,7 @@ eng-to-ru-transcriptor/
 
 1. Клонируйте репозиторий:
 ```bash
-git clone https://github.com
+git clone https://github.com/Isyarname/eng-to-ru-transcriptor
 cd eng-to-ru-transcriptor
 ```
 
