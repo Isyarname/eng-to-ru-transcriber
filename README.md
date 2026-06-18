@@ -39,7 +39,7 @@ print(t.transcribe("Hello world, this is a test."))
 # → Хэлоу уорлд, зис из э тэст.
 ```
 
-### Пользовательские исключения (дополняют встроенный словарь)
+### Пользовательские исключения транскрипции в МФА (дополняют встроенный словарь)
 
 ```python
 from eng_to_ru_transcriptor import Transcriptor
@@ -54,7 +54,7 @@ print(t.transcribe("Python and Docker are great"))
 # Встроенные слова (great) + пользовательские (Python, Docker)
 ```
 
-### Динамическое управление исключениями
+### Динамическое управление исключениями транскрипции в МФА
 
 ```python
 from eng_to_ru_transcriptor import Transcriptor
@@ -77,7 +77,7 @@ t.remove_exception("kubernetes")
 t.clear_custom_exceptions()
 ```
 
-### Временные исключения для одного вызова
+### Временные исключения транскрипции в МФА для одного вызова
 
 ```python
 from eng_to_ru_transcriptor import Transcriptor
