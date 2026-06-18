@@ -46,9 +46,9 @@
 
 ## 🔄 Пайплайн обработки
 
-### 1. Инициализация `Transcriptor`
+### 1. Инициализация `Transcriber`
 
-При создании объекта `Transcriptor()` ресурсы **не загружаются**. Только запоминаются пути:
+При создании объекта `Transcriber()` ресурсы **не загружаются**. Только запоминаются пути:
 - `rules_path` — путь к правилам транслитерации (по умолчанию — ресурс пакета)
 - `dict_path` — путь к словарю исключений (по умолчанию — ресурс пакета)
 - `cache_dir` — путь к кэшу (по умолчанию — `user_cache_dir`)
@@ -68,11 +68,11 @@
 ## 📂 Структура проекта
 
 ```
-eng-to-ru-transcriptor/
+eng-to-ru-transcriber/
 ├── pyproject.toml                          # Метаданные и сборка
-├── src/eng_to_ru_transcriptor/             # Пакет библиотеки
-│   ├── __init__.py                         # Экспорт Transcriptor
-│   ├── transcriptor.py                     # Класс-оркестратор
+├── src/eng_to_ru_transcriber/              # Пакет библиотеки
+│   ├── __init__.py                         # Экспорт Transcriber
+│   ├── transcriber.py                      # Класс-оркестратор
 │   ├── compiler.py                         # Компилятор правил транслитерации
 │   ├── transducer.py                       # Движок применения правил
 │   ├── ipa_to_ru.py                        # Мост IPA → кириллица
@@ -90,21 +90,21 @@ eng-to-ru-transcriptor/
     ├── test_compiler.py                    # Unit-тесты компилятора
     ├── test_transducer.py                  # Unit-тесты движка
     ├── test_eng_to_ipa_hybrid.py           # Unit-тесты гибридного движка
-    └── test_transcribe.py                  # Интеграционные тесты Transcriptor
+    └── test_transcribe.py                  # Интеграционные тесты Transcriber
 ```
 
 ### Где что лежит
 
 | Что                | Где                                  | Почему                              |
 |--------------------|--------------------------------------|-------------------------------------|
-| Исходный код       | `src/eng_to_ru_transcriptor/`        | src-layout — стандарт PyPA          |
-| Словари и правила  | `src/eng_to_ru_transcriptor/data/`   | Попадают в wheel при сборке         |
+| Исходный код       | `src/eng_to_ru_transcriber/`         | src-layout — стандарт PyPA          |
+| Словари и правила  | `src/eng_to_ru_transcriber/data/`    | Попадают в wheel при сборке         |
 | Кэш правил         | `user_cache_dir/`                    | read-write, не часть пакета         |
 | Пример текста      | `examples/text.txt`                  | Демонстрация, не ресурс пакета      |
 
 ## 🏗️ Архитектурные решения
 
-### Почему класс `Transcriptor`, а не функция?
+### Почему класс `Transcriber`, а не функция?
 
 - **Явное состояние.** Понятно, что загружено в память, что можно перезагрузить.
 - **Управление жизненным циклом.** `reload_dictionary()`, `reload_transliteration()`, `clear_cache()`.
@@ -160,7 +160,7 @@ eng-to-ru-transcriptor/
 | `test_compiler.py`         | Парсер правил, макросы, скобочные группы, заглавные буквы              |
 | `test_transducer.py`       | Детектор regex, применение правил, NFC-нормализация                    |
 | `test_eng_to_ipa_hybrid.py`| Токенизация, нормализация IPA, гибридная транскрипция                  |
-| `test_transcribe.py`       | Интеграционные тесты класса `Transcriptor`                             |
+| `test_transcribe.py`       | Интеграционные тесты класса `Transcriber`                             |
 
 Запуск:
 ```bash
@@ -175,7 +175,7 @@ pytest tests/ -v
 pip install -e ".[dev]"
 
 # Проверка работы
-python -c "from eng_to_ru_transcriptor import Transcriptor; print(Transcriptor().transcribe('hello'))"
+python -c "from eng_to_ru_transcriber import Transcriber; print(Transcriber().transcribe('hello'))"
 
 # Запуск примера
 python examples/basic_usage.py

@@ -12,11 +12,11 @@ from platformdirs import user_cache_dir
 from . import compiler, ipa_to_ru, eng_to_ipa_hybrid
 
 
-_PACKAGE_DATA = resources.files("eng_to_ru_transcriptor.data")
+_PACKAGE_DATA = resources.files("eng_to_ru_transcriber.data")
 
 
 def _default_cache_dir() -> Path:
-    return Path(user_cache_dir("eng_to_ru_transcriptor", appauthor=False))
+    return Path(user_cache_dir("eng_to_ru_transcriber", appauthor=False))
 
 
 def _default_rules_path() -> Path:
@@ -27,7 +27,7 @@ def _default_dict_path() -> Path:
     return Path(str(_PACKAGE_DATA.joinpath("en_dict.txt")))
 
 
-class Transcriptor:
+class Transcriber:
     """
     Оркестратор транслитерации английского текста в кириллицу.
 
@@ -35,7 +35,7 @@ class Transcriptor:
     Пользовательские исключения дополняют встроенный словарь, а не заменяют его.
 
     Пример:
-        >>> t = Transcriptor(custom_exceptions={"python": "ˈpaɪθɑn"})
+        >>> t = Transcriber(custom_exceptions={"python": "ˈpaɪθɑn"})
         >>> t.transcribe("Python is great")
         'ˈpaɪθɑn из грэйт'
     """
@@ -233,7 +233,7 @@ class Transcriptor:
         custom_count = len(self._custom_exceptions)
         custom_info = f", custom={custom_count}" if custom_count > 0 else ""
         return (
-            f"Transcriptor("
+            f"Transcriber("
             f"rules={'загружены' if self._compiled_rules else 'нет'}, "
             f"dict={dict_status}{custom_info}"
             f")"

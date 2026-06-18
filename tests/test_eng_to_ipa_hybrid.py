@@ -1,7 +1,7 @@
 """Unit-тесты для eng_to_ipa_hybrid.py."""
 import pytest
 
-from eng_to_ru_transcriptor.eng_to_ipa_hybrid import (
+from eng_to_ru_transcriber.eng_to_ipa_hybrid import (
     _tokenize,
     _is_word,
     _normalize_ipa_word,

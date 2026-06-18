@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from eng_to_ru_transcriptor import Transcriptor
+from eng_to_ru_transcriber import Transcriber
 
 
 EXAMPLES_DIR = Path(__file__).parent
@@ -23,7 +23,7 @@ def run_pipeline() -> None:
         "python": "ˈpaɪθɑn",
         "docker": "ˈdɑkər",
     }
-    t = Transcriptor(custom_exceptions=custom)
+    t = Transcriber(custom_exceptions=custom)
     print(f"📦 Создан: {t}")
 
     t.reload_transliteration()

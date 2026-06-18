@@ -1,7 +1,7 @@
 """Unit-тесты для compiler.py."""
 import pytest
 
-from eng_to_ru_transcriptor.compiler import (
+from eng_to_ru_transcriber.compiler import (
     parse,
     expand_macros,
     replace_brackets,

@@ -3,15 +3,16 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "eng-to-ru-transcriptor"
+name = "eng-to-ru-transcriber"
 version = "0.1.0"
 description = "Гибридный движок транслитерации английского текста кириллицей"
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
-authors = [{ name = "Isyarname" }]
+authors = [{ name = "kodovy-pesets" }]
 keywords = ["transliteration", "phonetics", "english", "russian", "ipa", "g2p"]
 classifiers = [
+    "Development Status :: 3 - Alpha",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
@@ -25,7 +26,6 @@ classifiers = [
 ]
 dependencies = [
     "gruut>=2.4.0",
-    "eng-to-ipa>=0.0.2",
     "platformdirs>=4.0.0",
 ]
 
@@ -35,9 +35,9 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/Isyarname/eng-to-ru-transcriptor"
-Repository = "https://github.com/Isyarname/eng-to-ru-transcriptor"
-Issues = "https://github.com/Isyarname/eng-to-ru-transcriptor/issues"
+Homepage = "https://github.com/Isyarname/eng-to-ru-transcriber"
+Repository = "https://github.com/Isyarname/eng-to-ru-transcriber"
+Issues = "https://github.com/Isyarname/eng-to-ru-transcriber/issues"
 
 # src-layout: setuptools ищет пакеты внутри src/
 [tool.setuptools.packages.find]
@@ -45,4 +45,4 @@ where = ["src"]
 
 # Включаем текстовые ресурсы (словари, DSL-правила, нормализации) в wheel
 [tool.setuptools.package-data]
-"eng_to_ru_transcriptor" = ["data/*.txt", "data/*.py"]
+"eng_to_ru_transcriber" = ["data/*.txt", "data/*.py"]
