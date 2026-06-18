@@ -26,6 +26,7 @@ def run_pipeline() -> None:
     t = Transcriptor(custom_exceptions=custom)
     print(f"📦 Создан: {t}")
 
+    t.reload_transliteration()
     result = t.transcribe(raw_text)
     print(f"📦 После транслитерации: {t}")
 
