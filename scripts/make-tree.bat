@@ -1,0 +1,6 @@
+@echo off
+chcp 65001 > nul
+set "script=function Show-Tree ($Path, $Indent) { $items = Get-ChildItem $Path -Force -ErrorAction SilentlyContinue | Where-Object { $_.Name -notmatch '^__pycache__$|\.pyc$|\.pyo$|\.pyd$|\.egg-info$|\.egg$|^\.eggs$|^build$|^dist$|^venv$|^\.venv$|^env$|^\.env$|^\.git$|^\.hg$|^\.svn$|^\.idea$|^\.vscode$|^\.mypy_cache$|^\.pytest_cache$|^\.ruff_cache$|^\.tox$|\.swp$|\.swo$|^\.DS_Store$|^Thumbs\.db$|^compiled_rules\.json$|^output_text\.txt$|^structure\.txt$|^make-tree\.bat$|^main\.py$' } | Sort-Object @{Expression={$_.PSIsContainer};Descending=$true}, Name; for ($i = 0; $i -lt $items.Count; $i++) { $item = $items[$i]; $isLast = $i -eq ($items.Count - 1); $prefix = '├── '; if ($isLast) { $prefix = '└── ' }; $name = $item.Name; if ($item.PSIsContainer) { $name += '/' }; [Console]::WriteLine($Indent + $prefix + $name); if ($item.PSIsContainer) { $nextIndent = $Indent + '│   '; if ($isLast) { $nextIndent = $Indent + '    ' }; Show-Tree $item.FullName $nextIndent } } }; [Console]::WriteLine('.'); Show-Tree '.' ''"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "%script%" > structure.txt
+echo Готово! Схема сохранена в файл structure.txt
+pause

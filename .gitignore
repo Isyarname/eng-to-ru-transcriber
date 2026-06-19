@@ -44,7 +44,6 @@ output_text.txt
 compiled_rules.json
 data/text.txt
 structure.txt
-make-tree.bat
 
 # OS
 .DS_Store
