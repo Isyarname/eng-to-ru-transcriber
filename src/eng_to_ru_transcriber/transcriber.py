@@ -5,7 +5,6 @@ import json
 from importlib import resources
 from importlib.util import spec_from_file_location, module_from_spec
 from pathlib import Path
-from typing import Iterable
 
 from platformdirs import user_cache_dir
 
@@ -32,12 +31,12 @@ class Transcriber:
     Оркестратор транслитерации английского текста в кириллицу.
 
     Лениво загружает ресурсы при первом вызове и кэширует их в памяти.
-    Пользовательские исключения дополняют встроенный словарь, а не заменяют его.
+    Пользовательский словарь дополняет встроенный, а не заменяет его.
 
     Пример:
-        >>> t = Transcriber(custom_exceptions={"python": "ˈpaɪθɑn"})
-        >>> t.transcribe("Python is great")
-        'ˈpaɪθɑn из грэйт'
+        >>> t = Transcriber()
+        >>> t.transcribe("Hello world")
+        'Хэлоу уорлд'
     """
 
     def __init__(
@@ -45,8 +44,15 @@ class Transcriber:
         rules_path: Path | None = None,
         dict_path: Path | None = None,
         cache_dir: Path | None = None,
-        custom_exceptions: dict[str, str] | None = None,
+        custom_vocabulary: dict[str, str] | None = None,
     ) -> None:
+        """
+        Args:
+            rules_path: Путь к правилам транслитерации. По умолчанию — ресурс пакета.
+            dict_path: Путь к словарю исключений. По умолчанию — ресурс пакета.
+            cache_dir: Папка для кэша compiled_rules.json. По умолчанию — user_cache_dir.
+            custom_vocabulary: Пользовательский словарь (дополняет встроенный).
+        """
         self._rules_path = rules_path or _default_rules_path()
         self._dict_path = dict_path or _default_dict_path()
         self._cache_dir = cache_dir or _default_cache_dir()
@@ -56,98 +62,62 @@ class Transcriber:
         self._compiled_rules: list[tuple[str, str]] | None = None
         self._dict_cache: dict[str, str] | None = None
 
-        # Пользовательские исключения (дополняют встроенный словарь)
-        self._custom_exceptions: dict[str, str] = dict(custom_exceptions) if custom_exceptions else {}
+        # Пользовательский словарь (задаётся один раз при создании)
+        self._custom_vocabulary: dict[str, str] = dict(custom_vocabulary) if custom_vocabulary else {}
 
     # ─────────────────────────── Публичный API ───────────────────────────
 
-    def transcribe(
-        self,
-        text: str,
-        custom_exceptions: dict[str, str] | None = None,
-    ) -> str:
+    def transcribe(self, text: str) -> str:
         """
         Транслитерирует английский текст в кириллицу.
 
         Args:
             text: Входной английский текст.
-            custom_exceptions: Временные исключения (дополняют объект-уровневые).
 
         Returns:
             Текст кириллицей.
         """
         compiled_rules = self.get_compiled_rules()
-        exceptions = self._merge_exceptions(custom_exceptions)
+        vocabulary = self.get_vocabulary()
 
-        ipa_text = eng_to_ipa_hybrid.transcribe(text, exceptions)
+        ipa_text = eng_to_ipa_hybrid.transcribe(text, vocabulary)
         return ipa_to_ru.convert(ipa_text, compiled_rules)
-
-    def transcribe_many(
-        self,
-        texts: Iterable[str],
-        custom_exceptions: dict[str, str] | None = None,
-    ) -> list[str]:
-        """Транслитерирует несколько текстов."""
-        return [self.transcribe(t, custom_exceptions) for t in texts]
 
     # ─────────────────────────── Доступ к ресурсам ───────────────────────
 
     def get_compiled_rules(self) -> list[tuple[str, str]]:
-        """Возвращает скомпилированные правила."""
+        """Возвращает скомпилированные правила (ленивая загрузка + кэш)."""
         if self._compiled_rules is None:
             self._compiled_rules = self._load_compiled_rules()
         return self._compiled_rules
 
-    def get_dict(self) -> dict[str, str]:
+    def get_vocabulary(self) -> dict[str, str]:
         """
-        Возвращает объединённый словарь: встроенный + пользовательские исключения.
-        Пользовательские имеют приоритет при конфликте ключей.
+        Возвращает объединённый словарь: встроенный + пользовательский.
+        Пользовательский имеет приоритет при конфликте ключей.
         """
         if self._dict_cache is None:
             self._dict_cache = self._parse_ipa_dictionary(self._dict_path)
-        
-        # Объединяем: встроенный + пользовательские (пользовательские перезаписывают)
-        return {**self._dict_cache, **self._custom_exceptions}
 
-    def get_custom_exceptions(self) -> dict[str, str]:
-        """Возвращает только пользовательские исключения."""
-        return self._custom_exceptions.copy()
-
-    # ─────────────────────────── Управление исключениями ─────────────────
-
-    def add_exception(self, word: str, ipa: str) -> None:
-        """Добавляет одно пользовательское исключение."""
-        self._custom_exceptions[word.lower()] = ipa
-
-    def add_exceptions(self, exceptions: dict[str, str]) -> None:
-        """Добавляет несколько пользовательских исключений."""
-        self._custom_exceptions.update({k.lower(): v for k, v in exceptions.items()})
-
-    def remove_exception(self, word: str) -> None:
-        """Удаляет пользовательское исключение."""
-        self._custom_exceptions.pop(word.lower(), None)
-
-    def clear_custom_exceptions(self) -> None:
-        """Удаляет все пользовательские исключения."""
-        self._custom_exceptions.clear()
+        return {**self._dict_cache, **self._custom_vocabulary}
 
     # ─────────────────────────── Управление состоянием ───────────────────
+
+    def reload_rules(self) -> None:
+        """Перекомпилирует правила транслитерации IPA → кириллица."""
+        self._compiled_rules = self._compile_rules_from_source()
 
     def reload_dictionary(self) -> None:
         """Перечитывает встроенный словарь с диска."""
         self._dict_cache = self._parse_ipa_dictionary(self._dict_path)
 
-    def reload_transliteration(self) -> None:
-        """Перекомпилирует правила транслитерации IPA → кириллица."""
-        self._compiled_rules = self._compile_rules_from_source()
-
     def reload_all(self) -> None:
         """Перезагружает всё: и словарь, и правила транслитерации."""
         self.reload_dictionary()
-        self.reload_transliteration()
+        self.reload_rules()
 
     def clear_cache(self) -> None:
-        """Удаляет JSON-кэш compiled_rules.json."""
+        """Удаляет JSON-кэш compiled_rules.json с диска."""
         cache_file = self._cache_dir / "compiled_rules.json"
         if cache_file.exists():
             cache_file.unlink()
@@ -155,23 +125,8 @@ class Transcriber:
 
     # ─────────────────────────── Внутренние методы ───────────────────────
 
-    def _merge_exceptions(
-        self,
-        temporary: dict[str, str] | None = None,
-    ) -> dict[str, str]:
-        """
-        Объединяет все уровни исключений:
-        1. Встроенный словарь (en_dict.txt)
-        2. Пользовательские исключения объекта
-        3. Временные исключения вызова (если переданы)
-        """
-        base = self.get_dict()
-        if temporary:
-            return {**base, **{k.lower(): v for k, v in temporary.items()}}
-        return base
-
     def _load_compiled_rules(self) -> list[tuple[str, str]]:
-        """Загружает правила из JSON-кэша или компилирует."""
+        """Загружает правила из JSON-кэша или компилирует заново."""
         cache_file = self._cache_dir / "compiled_rules.json"
 
         if cache_file.exists():
@@ -181,7 +136,7 @@ class Transcriber:
         return self._compile_rules_from_source()
 
     def _compile_rules_from_source(self) -> list[tuple[str, str]]:
-        """Компилирует DSL-правила и сохраняет в JSON-кэш."""
+        """Компилирует правила транслитерации из исходника и сохраняет в JSON-кэш."""
         if not self._rules_path.exists():
             raise FileNotFoundError(f"Файл правил не найден: {self._rules_path}")
 
@@ -229,12 +184,9 @@ class Transcriber:
     # ─────────────────────────── Магические методы ───────────────────────
 
     def __repr__(self) -> str:
-        dict_status = "загружен" if self._dict_cache else "нет"
-        custom_count = len(self._custom_exceptions)
-        custom_info = f", custom={custom_count}" if custom_count > 0 else ""
         return (
             f"Transcriber("
             f"rules={'загружены' if self._compiled_rules else 'нет'}, "
-            f"dict={dict_status}{custom_info}"
+            f"dict={'загружен' if self._dict_cache else 'нет'}"
             f")"
         )
