@@ -1,4 +1,4 @@
-# English-to-Russian Phonetic Transcriber 🔤
+# English-to-russian practical transcriber
 
 [Читать на русском языке](https://github.com/Isyarname/eng-to-ru-transcriber/blob/main/README.ru.md)
 
