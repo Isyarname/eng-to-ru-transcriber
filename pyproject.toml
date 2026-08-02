@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "eng-to-ru-transcriber"
-version = "0.2.1"
-description = "automatic English-to-Cyrillic text transcriber"
+version = "0.2.2"
+description = "automatic cnglish-to-cyrillic text transcriber"
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
 authors = [{ name = "kodovy-pesets" }]
-keywords = ["transliteration", "phonetics", "english", "russian", "ipa", "g2p"]
+keywords = ["transliteration", "english", "russian"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Programming Language :: Python :: 3",
