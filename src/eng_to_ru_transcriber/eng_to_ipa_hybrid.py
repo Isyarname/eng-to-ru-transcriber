@@ -10,6 +10,10 @@ from .data.phonetic_normalizations import (
 _WORD_PATTERN = re.compile(r"^[a-zA-Z']+$")
 _TOKEN_PATTERN = re.compile(r"[a-zA-Z']+|[^a-zA-Z']+")
 
+# Регулярки для подготовки текста
+_ABBR_SPLIT = re.compile(r'(?<=[a-zа-яё])(?=[A-ZА-ЯЁ]{2,})')
+_CAMEL_CASE = re.compile(r'([A-ZА-ЯЁ])(?=[a-zа-яё])')
+
 # Суффиксы, отделяемые от корня (отсортированы по убыванию длины)
 _SUFFIXES = sorted({
     "ment", "ness", "tion", "sion", "able", "ible",
@@ -18,11 +22,15 @@ _SUFFIXES = sorted({
     "es", "s",
 }, key=len, reverse=True)
 
-# Ограничение длины поиска в словаре
 MAX_DICT_WORD_LEN = 8
-
-# Кэш разбиений
 _SPLIT_CACHE: dict[str, list[tuple[str, bool]]] = {}
+
+
+def smart_lower(text: str) -> str:
+    """Умная обработка регистра с учётом аббревиатур и CamelCase."""
+    text = _ABBR_SPLIT.sub('-', text)
+    text = _CAMEL_CASE.sub(lambda m: m.group(1).lower(), text)
+    return text
 
 
 def _tokenize(text: str) -> list[str]:
@@ -101,24 +109,23 @@ def _normalize_ipa_word(ipa_word: str) -> str:
 def transcribe(
     text: str,
     custom_exceptions: dict[str, str],
-    transcription_rules: list[tuple[str, str]] | None = None,
+    transcription_rules: list[tuple[str, str]],
 ) -> str:
     """
     Гибридная транскрипция English → IPA.
-    Ключевое изменение: готовые IPA-части НЕ отправляются в rule_based_ipa повторно.
-    Транскрибируются только английские сегменты, затем всё склеивается.
     """
     if not text:
         return ""
-    if transcription_rules is None:
-        transcription_rules = []
+
+    # Применяем smart_lower до токенизации, чтобы разбить CamelCase и аббревиатуры
+    text = smart_lower(text)
+
     tokens = _tokenize(text)
     if not tokens:
         return ""
 
-    long_keys = {k for k in custom_exceptions if len(k) >= 4}
+    long_keys = {k for k in custom_exceptions.keys() if len(k) >= 4}
 
-    # word_lower -> список сегментов (текст, is_dict)
     word_segments: dict[str, list[tuple[str, bool]]] = {}
 
     # 1. Разбираем все слова на сегменты
@@ -130,8 +137,12 @@ def transcribe(
         if word_lower in word_segments:
             continue
 
+        # Если токен — аббревиатура (2+ заглавные буквы), НЕ ищем её в словаре.
+        # Вместо этого отдадим её в rule_based_ipa, чтобы разложить по буквам.
+        is_abbreviation = len(token) >= 2 and token.isupper()
+
         # Проверка целиком
-        if word_lower in custom_exceptions:
+        if not is_abbreviation and word_lower in custom_exceptions:
             word_segments[word_lower] = [(token, True)]
             continue
 
@@ -159,13 +170,13 @@ def transcribe(
             if not is_dict:
                 seg_lower = seg_text.lower()
                 if seg_lower not in seen_english:
-                    english_to_transcribe.append(seg_text)  # оригинальный регистр
+                    english_to_transcribe.append(seg_text)
                     seen_english.add(seg_lower)
 
     # 3. Транскрибируем только английские части
     english_mapping = _bulk_transcribe(english_to_transcribe, transcription_rules)
 
-    # 4. Собираем итоговый IPA — склеиваем готовые IPA + транскрибированные английские части
+    # 4. Собираем итоговый IPA
     final_tokens: list[str] = []
     for token in tokens:
         if _WORD_PATTERN.match(token):
@@ -175,10 +186,8 @@ def transcribe(
 
             for seg_text, is_dict in segments:
                 if is_dict:
-                    # Словарная часть — берём готовый IPA
                     ipa_parts.append(custom_exceptions[seg_text.lower()])
                 else:
-                    # Английская часть — берём из транскрибированных
                     ipa = english_mapping.get(seg_text, seg_text)
                     ipa_parts.append(ipa)
 

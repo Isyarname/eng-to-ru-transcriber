@@ -5,7 +5,35 @@ from eng_to_ru_transcriber.eng_to_ipa_hybrid import (
     _tokenize,
     _normalize_ipa_word,
     transcribe,
+    smart_lower,
 )
+
+
+class TestSmartLower:
+    """Проверка умной обработки регистра."""
+
+    def test_already_lowercase(self):
+        assert smart_lower("hello world") == "hello world"
+
+    def test_camel_case(self):
+        # Заглавная буква перед строчной становится строчной
+        assert smart_lower("MacBook") == "macbook"
+        assert smart_lower("CamelCase") == "camelcase"
+
+    def test_uppercase_abbreviation(self):
+        # Заглавные буквы (2 и более) отделяются дефисом, но НЕ переводятся в нижний регистр
+        assert smart_lower("myURL") == "my-URL"
+        assert smart_lower("parseXMLData") == "parse-XMLdata"
+
+    def test_mixed_case_and_abbreviation(self):
+        # Комбинация CamelCase и аббревиатур
+        assert smart_lower("MacOS") == "mac-OS"
+        # Если аббревиатура в середине, а после неё CamelCase
+        assert smart_lower("getHTTPResponseCode") == "get-HTTPresponsecode"
+
+    def test_all_caps(self):
+        # Строка из одних заглавных не меняется
+        assert smart_lower("USA") == "USA"
 
 
 class TestTokenize:
