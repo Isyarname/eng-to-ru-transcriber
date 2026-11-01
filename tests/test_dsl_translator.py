@@ -3,6 +3,7 @@ import pytest
 
 from eng_to_ru_transcriber.dsl_translator import (
     parse,
+    prepare_macros,
     expand_macros,
     replace_brackets,
     expand,
@@ -19,8 +20,11 @@ class TestParse:
         assert parse("") == []
 
     def test_non_string_input(self):
-        assert parse(None) == []
-        assert parse(123) == []
+        # Модуль осознанно падает на нестроковом вводе
+        with pytest.raises(TypeError):
+            parse(None)
+        with pytest.raises(TypeError):
+            parse(123)
 
     def test_simple_rule(self):
         result = parse("a -> b")
@@ -45,21 +49,26 @@ class TestParse:
 
 
 class TestExpandMacros:
-    """Разворачивание макросов."""
+    """Разворачивание макросов (после prepare_macros)."""
 
     def test_string_macro(self):
-        result = expand_macros(("X", "Y"), {"X": "hello"})
-        # ✅ expand_macros возвращает list, а не tuple
+        prepared = prepare_macros({"X": "hello"})
+        result = expand_macros(("X", "Y"), prepared)
         assert result == ["hello", "Y"]
 
     def test_set_macro(self):
-        result = expand_macros(("X", "Y"), {"X": {"a", "b"}})
+        prepared = prepare_macros({"X": {"a", "b"}})
+        result = expand_macros(("X", "Y"), prepared)
         assert result[0] in ("[ab]", "[ba]")
 
     def test_multiple_macros(self):
-        result = expand_macros(("AB", "CD"), {"A": "x", "B": "y"})
-        # ✅ list, а не tuple
+        prepared = prepare_macros({"A": "x", "B": "y"})
+        result = expand_macros(("AB", "CD"), prepared)
         assert result == ["xy", "CD"]
+
+    def test_empty_macros_returns_copy(self):
+        result = expand_macros(("X", "Y"), [])
+        assert result == ["X", "Y"]
 
 
 class TestReplaceBrackets:
@@ -87,7 +96,6 @@ class TestExpand:
         assert set(result) == {("a", "x"), ("b", "y")}
 
     def test_broadcast_single_option(self):
-        # Если в правой части одна опция, она дублируется
         result = expand(("(a|b|c)", "x"))
         assert set(result) == {("a", "x"), ("b", "x"), ("c", "x")}
 
@@ -107,7 +115,6 @@ class TestIsCapitalizableLetter:
         assert is_capitalizable_letter("A") is False
 
     def test_ipa_symbols(self):
-        # IPA-символы из расширений Unicode
         assert is_capitalizable_letter("ɑ") is False  # U+0251
         assert is_capitalizable_letter("ɪ") is False  # U+026A
 
@@ -117,7 +124,7 @@ class TestIsCapitalizableLetter:
 
 
 class TestAddCapitalizedPairs:
-    """Добавление пар для заглавных букв."""
+    """Изолированная проверка утилиты (в build_rules не используется)."""
 
     def test_adds_capitalized(self):
         pairs = [("abc", "xyz")]
@@ -126,30 +133,19 @@ class TestAddCapitalizedPairs:
         assert ("abc", "xyz") in result
 
     def test_skips_non_capitalizable(self):
-        # Начинается с IPA-символа
         pairs = [("ɑbc", "xyz")]
         result = add_capitalized_pairs(pairs)
         assert len(result) == 1
         assert result[0] == ("ɑbc", "xyz")
 
 
-class TestDsl_traNslatorules:
+class TestBuildRules:
     """Интеграционный тест полной компиляции."""
 
     def test_full_pipeline(self):
-        rules_str = "a -> x\nb -> y"
-        result = build_rules(rules_str, macros={}, add_capitalized=False)
+        result = build_rules("a -> x\nb -> y", macros={})
         assert result == [("a", "x"), ("b", "y")]
 
     def test_with_macros(self):
-        rules_str = "V -> а"
-        macros = {"V": {"a", "e"}}
-        result = build_rules(rules_str, macros, add_capitalized=False)
-        # Должно развернуться в две строки
+        result = build_rules("V -> а", {"V": {"a", "e"}})
         assert len(result) == 2
-
-    def test_with_capitalized(self):
-        rules_str = "a -> x"
-        result = build_rules(rules_str, macros={}, add_capitalized=True)
-        assert ("A", "X") in result
-        assert ("a", "x") in result

@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-10-31
+
+### Changed
+- `Transcriber` loads rules and dictionary in `__init__` instead of on first `transcribe()`. If bundled data is missing or corrupt, construction now fails immediately — previously the error surfaced only when `transcribe()` was called.
+- `repr(Transcriber())` reports resource counts instead of load status.
+- `clear_cache()` recompiles rules right after deleting the on-disk JSON caches, so in-memory and on-disk state stay in sync.
+
+## [0.2.2] - 2026-08-02
+
+### Documentation
+- Documentation-only release, version bumped to publish updated docs on PyPI. No code changes.
+
 ## [0.2.1] - 2026-06-27
 
 ### Changed

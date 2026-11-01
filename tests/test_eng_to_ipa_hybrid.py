@@ -3,7 +3,6 @@ import pytest
 
 from eng_to_ru_transcriber.eng_to_ipa_hybrid import (
     _tokenize,
-    _is_word,
     _normalize_ipa_word,
     transcribe,
 )
@@ -25,25 +24,6 @@ class TestTokenize:
 
     def test_only_spaces(self):
         assert _tokenize("   ") == ["   "]
-
-class TestIsWord:
-    """Проверка, является ли токен словом."""
-
-    def test_regular_word(self):
-        assert _is_word("hello") is True
-
-    def test_with_apostrophe(self):
-        assert _is_word("don't") is True
-
-    def test_space(self):
-        assert _is_word(" ") is False
-
-    def test_punctuation(self):
-        assert _is_word(",") is False
-        assert _is_word("!") is False
-
-    def test_mixed(self):
-        assert _is_word("hello!") is False
 
 
 class TestNormalizeIpaWord:

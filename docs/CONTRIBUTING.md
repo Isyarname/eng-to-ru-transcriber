@@ -40,9 +40,19 @@ All tests must pass before submitting a PR.
    ```
 4. Run tests:
    ```bash
-   pytest
+   python -m pytest
    ```
 5. Create a PR with a description of the new rule and examples.
+
+## 📖 How to Update the Dictionary
+
+The source dictionary is stored as a plain text file (`scripts/en_dict.txt`) and compiled into a pickle for faster loading.
+
+1. Edit `scripts/en_dict.txt` (format: `word \t IPA_transcription`).
+2. Run the converter script to regenerate the `.pkl` file:
+   ```bash
+   python scripts/convert_dict.py
+   ```
 
 ## 🔀 Git Workflow
 
@@ -69,7 +79,7 @@ Before submitting your PR, make sure:
 - [ ] Code follows the existing style (4 spaces, type hints)
 - [ ] Added tests for new functionality (if applicable)
 - [ ] Updated documentation (if applicable)
-- [ ] PR description explains what ch
+- [ ] PR description explains what changed and why
 
 ## 🐛 Reporting Issues
 

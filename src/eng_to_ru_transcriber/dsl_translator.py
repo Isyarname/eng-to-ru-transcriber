@@ -1,37 +1,58 @@
 import itertools
 import re
 
+
 def parse(rules_str: str, transition_symbol="->") -> list:
     if not isinstance(rules_str, str):
-        return []
+        raise TypeError(
+                    f"rules_str должен быть str, получено {type(rules_str).__name__}"
+        )
     pattern = re.compile(r'(\S+)\s*' + re.escape(transition_symbol) + r'\s*(\S+)')
     prepared_rules = []
     for line in rules_str.strip().splitlines():
-        matches = pattern.findall(line)
-        if not matches:
-            continue
-        prepared_rules.extend(list(matches))
+        prepared_rules.extend(pattern.findall(line))
     return prepared_rules
 
-def expand_macros(rule: list, macros: dict) -> list:
+
+def prepare_macros(macros) -> list[tuple[str, str]]:
+    """
+    Однократная подготовка макросов:
+      * преобразование множеств в символьные классы вида [abc];
+      * отбрасывание нестроковых значений;
+      * сортировка по убыванию длины ключа (длинные — первыми).
+    Возвращает готовый список пар (old, new), пригодный для expand_macros.
+    """
+    if not macros:
+        return []
     items = macros.items() if isinstance(macros, dict) else macros
-    sorted_macros = sorted(items, key=lambda e: -len(e[0]))
-    
+    prepared = []
+    for old, new in items:
+        if isinstance(new, set):
+            new = f"[{''.join(sorted(new))}]"
+        if isinstance(new, str):
+            prepared.append((old, new))
+    prepared.sort(key=lambda e: -len(e[0]))
+    return prepared
+
+
+def expand_macros(rule: list, prepared_macros: list[tuple[str, str]]) -> list:
+    """Подставляет уже подготовленные макросы в одно правило."""
+    if not prepared_macros:
+        return list(rule)
     new_rule = []
     for part in rule:
-        for old, new in sorted_macros:
-            if isinstance(new, set):
-                new = f"[{''.join(sorted(new))}]"
-            if isinstance(new, str):
-                part = part.replace(old, new)
+        for old, new in prepared_macros:
+            part = part.replace(old, new)
         new_rule.append(part)
     return new_rule
+
 
 def replace_brackets(text: str) -> str:
     classes = re.findall(r"\[(.*?)\]", text)
     for c in classes:
         text = text.replace(f"[{c}]", f"({ '|'.join(c) })")
     return text
+
 
 def expand(rule: list[str]) -> list[tuple[str, str]]:
     rule1, rule2 = [replace_brackets(part) for part in rule]
@@ -41,12 +62,12 @@ def expand(rule: list[str]) -> list[tuple[str, str]]:
         matches1 = re.findall(pattern, rule1)
         if len(matches1) == 1:
             rule2 = f"({rule2})"
-            
+
     parts1 = re.split(pattern, rule1)
     parts2 = re.split(pattern, rule2)
     if len(parts1) != len(parts2):
         raise ValueError(f"Строки имеют разное количество скобочных групп: {rule}")
-    
+
     aligned_parts1 = []
     aligned_parts2 = []
     for i in range(len(parts1)):
@@ -62,19 +83,24 @@ def expand(rule: list[str]) -> list[tuple[str, str]]:
                 raise ValueError(f"Невозможно сопоставить варианты в группе {i//2 + 1}")
             aligned_parts1.append(opts1)
             aligned_parts2.append(opts2)
-            
+
     combs1 = itertools.product(*aligned_parts1)
     combs2 = itertools.product(*aligned_parts2)
     return [("".join(c1), "".join(c2)) for c1, c2 in zip(combs1, combs2)]
 
+
 def is_capitalizable_letter(char: str) -> bool:
+    """True, если у символа есть осмысленный верхний регистр."""
+    NON_CAPITALIZABLE_RANGES = (
+        (0x0250, 0x02AF),
+        (0x1D00, 0x1D7F),
+        (0x1D80, 0x1DBF),
+    )
     if not (char.isalpha() and char.islower()):
         return False
     code = ord(char)
-    if 0x0250 <= code <= 0x02AF: return False
-    if 0x1D00 <= code <= 0x1D7F: return False
-    if 0x1D80 <= code <= 0x1DBF: return False
-    return True
+    return not any(lo <= code <= hi for lo, hi in NON_CAPITALIZABLE_RANGES)
+
 
 def add_capitalized_pairs(pairs: list) -> list:
     capitalized = []
@@ -85,19 +111,21 @@ def add_capitalized_pairs(pairs: list) -> list:
             capitalized.append((L_cap, R_cap))
     return capitalized + pairs
 
+
 def build_rules(rules_str: str, macros: dict) -> list:
     """
     🌟 ГЛАВНАЯ ЧИСТАЯ ФУНКЦИЯ МОДУЛЯ.
-    Принимает сырую строку правил и словарь макросов. 
+    Принимает сырую строку правил и словарь макросов.
     Возвращает готовый плоский список кортежей замен.
     """
     parsed_pairs = parse(rules_str)
-    
-    if macros:
-        parsed_pairs = [expand_macros(pair, macros) for pair in parsed_pairs]
-        
+
+    prepared_macros = prepare_macros(macros)
+    if prepared_macros:
+        parsed_pairs = [expand_macros(pair, prepared_macros) for pair in parsed_pairs]
+
     expanded_rules = []
     for pair in parsed_pairs:
         expanded_rules.extend(expand(pair))
-        
+
     return expanded_rules

@@ -101,7 +101,7 @@ def _normalize_ipa_word(ipa_word: str) -> str:
 def transcribe(
     text: str,
     custom_exceptions: dict[str, str],
-    transcription_rules: list[tuple[str, str]],
+    transcription_rules: list[tuple[str, str]] | None = None,
 ) -> str:
     """
     Гибридная транскрипция English → IPA.
@@ -110,12 +110,13 @@ def transcribe(
     """
     if not text:
         return ""
-
+    if transcription_rules is None:
+        transcription_rules = []
     tokens = _tokenize(text)
     if not tokens:
         return ""
 
-    long_keys = {k for k in custom_exceptions.keys() if len(k) >= 4}
+    long_keys = {k for k in custom_exceptions if len(k) >= 4}
 
     # word_lower -> список сегментов (текст, is_dict)
     word_segments: dict[str, list[tuple[str, bool]]] = {}

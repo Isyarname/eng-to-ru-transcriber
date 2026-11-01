@@ -12,7 +12,7 @@ def apply_rules(text: str, rules: list) -> str:
             prepared_rules.append((re.compile(L), R, True))
         else:
             prepared_rules.append((L, R, False))
-            
+
     for pattern_or_str, R, has_regex in prepared_rules:
         if has_regex:
             text = pattern_or_str.sub(R, text)
@@ -22,7 +22,7 @@ def apply_rules(text: str, rules: list) -> str:
 
 def process_text(text: str, rules: list) -> str:
     """
-    Принимает текст и готовый список правил (загруженный из JSON в main.py).
+    Принимает текст и готовый список правил.
     Применяет правила и возвращает нормализованную строку.
     """
     text = apply_rules(text, rules)

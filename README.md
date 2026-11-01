@@ -1,26 +1,38 @@
-# English-to-russian practical transcriber
+# Practical English-Russian Transcription
 
 [Читать на русском языке](https://github.com/Isyarname/eng-to-ru-transcriber/blob/main/README.ru.md)
 
-A Python library for automatic English-to-Cyrillic text transcription using a hybrid engine: dictionary lookup and rule-based transcription for unknown words.
+A lightweight Python library for quick and deterministic practical transcription of English words using the Russian alphabet.
 
-## 💡 Features
+## Why this exists
 
-- **Universal transcription** — handles any English text, including invented words, neologisms, and rare names.
-- **Custom vocabulary** — augment the built-in dictionary with your own overrides.
+**This library is built for:**
+- **Adapting slang and neologisms** (e.g., *crush*, *vibe*, *hype*).
+- **Transcribing names, usernames, and brand names.**
 
-## ⚡ Key Highlights
+Modern translation tools are powerful, but they are overkill for simple tasks:
+- **Cloud APIs** (like Google Translate or DeepL) require an internet connection and have rate limits.
+- **Neural networks** (even local ones) are heavy, slow to initialize, and can produce unpredictable results.
 
-- **Two-tier lookup** — IPA via local 120k+ dict + rule-based transcription backup.
-- **Graphemic adaptation** — Cyrillic matches Russian orthography.
+Sometimes you just need to instantly write English words, names, or slang using the Russian alphabet without waiting for models to load.
 
-## 🚀 Installation
+## Features
+
+- **Practical transcription:** adapts IPA pronunciation to match Russian orthography rules, rather than just letter-by-letter replacement.
+- **Zero dependencies & 100% offline:** no heavy ML models or cloud APIs. Works instantly.
+- **Deterministic:** the same word always yields the exact same result.
+- **Hybrid engine:** uses a built-in 120k+ word dictionary for common words and a fast rule-based engine for everything else.
+- **Custom vocabulary:** easily teach the library how to transcribe your specific character names, brands, or terms.
+
+## Installation
+
+Requires Python 3.9 or higher.
 
 ```bash
 pip install eng-to-ru-transcriber
 ```
 
-## 💻 Usage
+## Usage
 
 ### Basic Example
 
@@ -28,31 +40,47 @@ pip install eng-to-ru-transcriber
 from eng_to_ru_transcriber import Transcriber
 
 t = Transcriber()
-print(t.transcribe("Hello world"))
+print(t.transcribe("Hello world")) 
 # → Хэлоу уорлд
+```
+
+### Handling Slang and Nicknames
+
+The library automatically handles CamelCase and abbreviations, making it perfect for gaming nicknames or tech slang:
+
+```python
+print(t.transcribe("myURL and MacBook")) 
+# → май-урл энд макбук
 ```
 
 ### Custom Vocabulary
 
+You can easily override the pronunciation of specific words (names, brands, or specific slang) by passing a dictionary:
+
 ```python
 from eng_to_ru_transcriber import Transcriber
 
-custom_vocabulary = {"python": "ˈpaɪθɑn"}
+# Teach the transcriber your custom terms
+custom_vocabulary = {
+    "python": "ˈpaɪθɑn",
+    "kubernetes": "ˌk(j)uːbəˈnɛtɪs"
+}
+
 t = Transcriber(custom_vocabulary=custom_vocabulary)
-print(t.transcribe("Python is great"))
+print(t.transcribe("I love Python and Kubernetes"))
 ```
 
-## 🧪 Testing
+## Testing
 
 ```bash
-pip install pytest
-pytest
+pip install -e ".[dev]"
+python -m pytest
 ```
 
-## 📊 Data Sources
+## Data Sources
 
 Based on curated IPA data from OpenWiktionary.
 
-## 📜 License
+## License
 
 MIT

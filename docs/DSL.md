@@ -176,19 +176,6 @@ Then expanded into separate rules for each combination.
 3. **Expand brackets** — convert `[abc]` to `(a|b|c)` and generate all combinations
 4. **Add capitalized variants** — duplicate rules with uppercase first letter (if applicable)
 
-### Uppercase duplication
-
-The compiler automatically generates uppercase variants for rules where the first character of LHS is a **capitalizable letter**:
-
-- ASCII letters (`a-z`) → uppercase (`A-Z`)
-- Cyrillic letters (`а-я`) → uppercase (`А-Я`)
-- **IPA symbols** (Unicode ranges `0x0250-0x02AF`, `0x1D00-0x1D7F`, `0x1D80-0x1DBF`) are **NOT** capitalized
-
-Example: a rule `b->б` generates:
-- `b->б` (original)
-- `B->Б` (capitalized)
-
-A rule `ʲа->я` does **NOT** generate an uppercase variant because `ʲ` is an IPA symbol.
 
 ### Rule application order
 

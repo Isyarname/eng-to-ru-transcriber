@@ -10,22 +10,27 @@ from . import dsl_translator, ipa_to_ru, eng_to_ipa_hybrid
 
 _PACKAGE_DATA = resources.files("eng_to_ru_transcriber.data")
 
+_TRANSLIT_CACHE_FILE = "transliteration_rules.json"
+_ENG_RULES_CACHE_FILE = "eng_to_ipa_rules.json"
+
+
+def _data_path(filename: str) -> Path:
+    return Path(str(_PACKAGE_DATA.joinpath(filename)))
+
+
+_DEFAULT_RULES_PATH = _data_path("transliteration_rules.py")
+_DEFAULT_ENG_RULES_PATH = _data_path("eng_to_ipa_rules.py")
+_DEFAULT_DICT_PATH = _data_path("en_dict.pkl")
+
+
 def _default_cache_dir() -> Path:
     return Path(user_cache_dir("eng_to_ru_transcriber", appauthor=False))
 
-def _default_rules_path() -> Path:
-    return Path(str(_PACKAGE_DATA.joinpath("transliteration_rules.py")))
-
-def _default_eng_rules_path() -> Path:
-    return Path(str(_PACKAGE_DATA.joinpath("eng_to_ipa_rules.py")))
-
-def _default_dict_path() -> Path:
-    return Path(str(_PACKAGE_DATA.joinpath("en_dict.pkl")))
 
 class Transcriber:
     """
     Оркестратор транслитерации английского текста в кириллицу.
-    Лениво загружает ресурсы при первом вызове и кэширует их в памяти.
+    Все ресурсы (правила и словарь) загружаются в конструкторе.
     Пользовательский словарь дополняет встроенный, а не заменяет его.
     """
 
@@ -45,60 +50,58 @@ class Transcriber:
             cache_dir: Папка для кэша JSON.
             custom_vocabulary: Пользовательский словарь (дополняет встроенный).
         """
-        self._rules_path = rules_path or _default_rules_path()
-        self._eng_rules_path = eng_rules_path or _default_eng_rules_path()
-        self._dict_path = dict_path or _default_dict_path()
+        self._rules_path = rules_path or _DEFAULT_RULES_PATH
+        self._eng_rules_path = eng_rules_path or _DEFAULT_ENG_RULES_PATH
+        self._dict_path = dict_path or _DEFAULT_DICT_PATH
         self._cache_dir = cache_dir or _default_cache_dir()
         self._cache_dir.mkdir(parents=True, exist_ok=True)
 
-        # Лениво загружаемые ресурсы
-        self._transliteration_rules: list[tuple[str, str]] | None = None
-        self._eng_to_ipa_rules: list[tuple[str, str]] | None = None
-        self._dict_cache: dict[str, str] | None = None
+        self._custom_vocabulary: dict[str, str] = (
+            dict(custom_vocabulary) if custom_vocabulary else {}
+        )
 
-        # Пользовательский словарь
-        self._custom_vocabulary: dict[str, str] = dict(custom_vocabulary) if custom_vocabulary else {}
+        # Загрузка ресурсов
+        self._transliteration_rules = self._compile_dsl(
+            self._rules_path, _TRANSLIT_CACHE_FILE,
+        )
+        self._eng_to_ipa_rules = self._compile_dsl(
+            self._eng_rules_path, _ENG_RULES_CACHE_FILE,
+        )
+        self._dict_cache = self._load_ipa_dictionary(self._dict_path)
 
     # ─────────────────────────── Публичный API ───────────────────────────
 
     def transcribe(self, text: str) -> str:
         """Транслитерирует английский текст в кириллицу."""
-        transliteration_rules = self.get_transliteration_rules()
-        eng_to_ipa_rules = self.get_eng_to_ipa_rules()
-        vocabulary = self.get_vocabulary()
-
-        # 1. Английский текст -> IPA (с использованием правил и словаря)
-        ipa_text = eng_to_ipa_hybrid.transcribe(text, vocabulary, eng_to_ipa_rules)
-        #print(ipa_text)
-        # 2. IPA -> Кириллица
-        return ipa_to_ru.convert(ipa_text, transliteration_rules)
+        ipa_text = eng_to_ipa_hybrid.transcribe(
+            text, self.get_vocabulary(), self._eng_to_ipa_rules,
+        )
+        return ipa_to_ru.convert(ipa_text, self._transliteration_rules)
 
     # ─────────────────────────── Доступ к ресурсам ───────────────────────
 
     def get_transliteration_rules(self) -> list[tuple[str, str]]:
         """Возвращает скомпилированные правила IPA → кириллица."""
-        if self._transliteration_rules is None:
-            self._transliteration_rules = self._compile_dsl(self._rules_path, "transliteration_rules.json")
         return self._transliteration_rules
 
     def get_eng_to_ipa_rules(self) -> list[tuple[str, str]]:
         """Возвращает скомпилированные правила English → IPA."""
-        if self._eng_to_ipa_rules is None:
-            self._eng_to_ipa_rules = self._compile_dsl(self._eng_rules_path, "eng_to_ipa_rules.json")
         return self._eng_to_ipa_rules
 
     def get_vocabulary(self) -> dict[str, str]:
         """Возвращает объединённый словарь: встроенный + пользовательский."""
-        if self._dict_cache is None:
-            self._dict_cache = self._load_ipa_dictionary(self._dict_path)
         return {**self._dict_cache, **self._custom_vocabulary}
 
     # ─────────────────────────── Управление состоянием ───────────────────
 
     def reload_rules(self) -> None:
-        """Перекомпилирует правила """
-        self._transliteration_rules = self._compile_dsl(self._rules_path, "transliteration_rules.json", force=True)
-        self._eng_to_ipa_rules = self._compile_dsl(self._eng_rules_path, "eng_to_ipa_rules.json", force=True)
+        """Перекомпилирует оба набора правил, игнорируя кэш на диске."""
+        self._transliteration_rules = self._compile_dsl(
+            self._rules_path, _TRANSLIT_CACHE_FILE, force=True,
+        )
+        self._eng_to_ipa_rules = self._compile_dsl(
+            self._eng_rules_path, _ENG_RULES_CACHE_FILE, force=True,
+        )
 
     def reload_dictionary(self) -> None:
         """Перечитывает встроенный словарь с диска."""
@@ -110,20 +113,22 @@ class Transcriber:
         self.reload_rules()
 
     def clear_cache(self) -> None:
-        """Удаляет JSON-кэши с диска."""
-        for filename in ("transliteration_rules.json", "eng_to_ipa_rules.json"):
+        """Удаляет JSON-кэши с диска и перекомпилирует правила из DSL."""
+        for filename in (_TRANSLIT_CACHE_FILE, _ENG_RULES_CACHE_FILE):
             cache_file = self._cache_dir / filename
             if cache_file.exists():
                 cache_file.unlink()
-        self._transliteration_rules = None
-        self._eng_to_ipa_rules = None
+        self.reload_rules()
 
     # ─────────────────────────── Внутренние методы ───────────────────────
 
-    def _compile_dsl(self, rules_path: Path, cache_filename: str, force: bool = False) -> list[tuple[str, str]]:
-        """
-        Универсальный метод: загружает правила из JSON-кэша или компилирует из DSL.
-        """
+    def _compile_dsl(
+        self,
+        rules_path: Path,
+        cache_filename: str,
+        force: bool = False,
+    ) -> list[tuple[str, str]]:
+        """Загружает правила из JSON-кэша или компилирует из DSL."""
         cache_file = self._cache_dir / cache_filename
 
         if cache_file.exists() and not force:
@@ -164,8 +169,8 @@ class Transcriber:
     def __repr__(self) -> str:
         return (
             f"Transcriber("
-            f"ipa_rules={'загружены' if self._transliteration_rules else 'нет'}, "
-            f"eng_rules={'загружены' if self._eng_to_ipa_rules else 'нет'}, "
-            f"dict={'загружен' if self._dict_cache else 'нет'}"
+            f"ipa_rules={len(self._transliteration_rules)}, "
+            f"eng_rules={len(self._eng_to_ipa_rules)}, "
+            f"dict={len(self._dict_cache)}"
             f")"
         )

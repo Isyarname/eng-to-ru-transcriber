@@ -19,34 +19,41 @@ class TestTranscriberClass:
 
     def test_creation(self):
         t = Transcriber()
-        assert repr(t) == "Transcriber(rules=нет, dict=нет)"
+        r = repr(t)
+        # Формат: Transcriber(ipa_rules=N, eng_rules=N, dict=N)
+        assert r.startswith("Transcriber(ipa_rules=")
+        assert "eng_rules=" in r
+        assert "dict=" in r
 
-    def test_lazy_loading(self):
+    def test_eager_loading(self):
+        """Все ресурсы загружаются в конструкторе, без отложенной загрузки."""
         t = Transcriber()
-        # До первого вызова ресурсы не загружены
-        assert t._compiled_rules is None
-        assert t._dict_cache is None
-
-        # После вызова — загружены
-        t.transcribe("hello")
-        assert t._compiled_rules is not None
+        assert t._transliteration_rules is not None
+        assert t._eng_to_ipa_rules is not None
         assert t._dict_cache is not None
-        assert "rules=загружены" in repr(t)
+
+    def test_resources_are_non_empty(self):
+        """Ресурсы не просто загружены, а содержат данные."""
+        t = Transcriber()
+        assert len(t._transliteration_rules) > 0
+        assert len(t._eng_to_ipa_rules) > 0
+        assert len(t._dict_cache) > 0
 
     def test_multiple_calls_use_cache(self):
         t = Transcriber()
-        t.transcribe("hello")
-        rules_ref = t._compiled_rules
+        ru_rules_ref = t._transliteration_rules
+        eng_rules_ref = t._eng_to_ipa_rules
         dict_ref = t._dict_cache
 
-        # Второй вызов использует те же объекты
+        # Вызовы не пересоздают ресурсы
+        t.transcribe("hello")
         t.transcribe("world")
-        assert t._compiled_rules is rules_ref
+        assert t._transliteration_rules is ru_rules_ref
+        assert t._eng_to_ipa_rules is eng_rules_ref
         assert t._dict_cache is dict_ref
 
     def test_reload_dictionary(self):
         t = Transcriber()
-        t.transcribe("hello")
         old_dict = t._dict_cache
 
         t.reload_dictionary()
@@ -54,20 +61,22 @@ class TestTranscriberClass:
 
     def test_reload_rules(self):
         t = Transcriber()
-        t.transcribe("hello")
-        old_rules = t._compiled_rules
+        old_ru_rules = t._transliteration_rules
+        old_eng_rules = t._eng_to_ipa_rules
 
         t.reload_rules()
-        assert t._compiled_rules is not old_rules
+        assert t._transliteration_rules is not old_ru_rules
+        assert t._eng_to_ipa_rules is not old_eng_rules
 
     def test_reload_all(self):
         t = Transcriber()
-        t.transcribe("hello")
-        old_rules = t._compiled_rules
+        old_ru_rules = t._transliteration_rules
+        old_eng_rules = t._eng_to_ipa_rules
         old_dict = t._dict_cache
 
         t.reload_all()
-        assert t._compiled_rules is not old_rules
+        assert t._transliteration_rules is not old_ru_rules
+        assert t._eng_to_ipa_rules is not old_eng_rules
         assert t._dict_cache is not old_dict
 
 
@@ -151,6 +160,8 @@ class TestBasicTranscription:
 
 
 class TestEdgeCases:
+    """Краевые входы."""
+
     def test_numbers(self):
         t = Transcriber()
         result = t.transcribe("test 123")
@@ -189,6 +200,5 @@ class TestMultipleInstances:
         t2 = Transcriber()
 
         assert "word" in t1.get_vocabulary()
-        # У t2 пользовательского слова нет, но может быть встроенное
-        # Главное — словари разные
-        assert t1.get_vocabulary() != t2.get_vocabulary() or "word" not in t2.get_vocabulary()
+        # У t2 пользовательского слова нет
+        assert "word" not in t2._custom_vocabulary
