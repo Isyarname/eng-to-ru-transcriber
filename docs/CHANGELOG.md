@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-07
+
+### Changed
+- **Breaking:** `Transcriber` constructor parameters renamed for clarity and to reflect the new `.pkl`-only loading:
+  - `rules_path` → `translit_rules_pkl`
+  - `eng_rules_path` → `eng_to_ipa_rules_pkl`
+  - `dict_path` → `en_dict_pkl`
+  - `cache_dir` → removed (no cache directory anymore)
+  - `norms_pkl` (new parameter) for phonetic normalizations.
+  All parameters now accept paths to compiled `.pkl` files, not source `.py` files.
+- Rules are now compiled at **build time** by `scripts/build_rules.py` and shipped as `.pkl` inside the wheel. No JSON cache, no runtime compilation.
+- `dsl_translator.py` moved from `src/eng_to_ru_transcriber/` to `scripts/` — it is now a build-time tool, not part of the runtime package.
+- Source rule files (`transliteration_rules.py`, `eng_to_ipa_rules.py`, `phonetic_normalizations.py`) and `en_dict.txt` moved to `data_src/` in the repository. Only compiled `.pkl` files remain in the wheel.
+- `Transcriber` merges `custom_vocabulary` with the built-in dictionary **once in `__init__`** instead of on every `transcribe()` call. This fixes a severe performance regression (~15 ms per call regardless of input size).
+- `Transcriber` precomputes `long_keys` (dictionary keys ≥ 4 chars used for word splitting) once in `__init__`. Previously this was rebuilt from the 125k-word dictionary on every call.
+
+### Added
+- `scripts/build_rules.py` — compiles DSL rules and phonetic normalizations into `.pkl`.
+- `scripts/benchmark.py` — measures cold start, per-word throughput, and lru_cache effects.
+
+### Removed
+- **Breaking:** `Transcriber.reload_rules()`, `reload_dictionary()`, `reload_all()`, and `clear_cache()` — resources are loaded once in `__init__`; create a new `Transcriber` to pick up changed files.
+- **Breaking:** `Transcriber.get_vocabulary()` — access `_merged_vocabulary` directly if needed.
+- `platformdirs` dependency — no more user cache directory.
+- JSON rule cache logic in `Transcriber`.
+
+### Performance
+- Transcription throughput improved from ~65 words/sec to **~14,500 words/sec** on unique words (≈220× faster).
+- Repeated words benefit further from `lru_cache` in `rule_based_ipa` — up to **~18,000 calls/sec**.
+- Cold start remains ~100 ms (pickle loading only).
+
+
 ## [0.2.3] - 2026-10-31
 
 ### Changed

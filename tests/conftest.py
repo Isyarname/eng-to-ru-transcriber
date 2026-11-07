@@ -1,5 +1,11 @@
 """Общие fixtures для всех тестов."""
+import sys
+from pathlib import Path
+
 import pytest
+
+# Добавляем папку scripts в sys.path, чтобы тесты могли импортировать dsl_translator
+sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 
 
 @pytest.fixture

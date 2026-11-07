@@ -1,4 +1,5 @@
 """Unit-тесты для ipa_to_ru.py."""
+import re
 import pytest
 
 from eng_to_ru_transcriber import ipa_to_ru
@@ -14,16 +15,17 @@ class TestIpaToRuConvert:
         assert ipa_to_ru.convert("test", []) == "test"
 
     def test_simple_replacement(self):
-        rules = [("a", "а"), ("b", "б")]
+        rules = [("a", "а", False), ("b", "б", False)]
         assert ipa_to_ru.convert("ab", rules) == "аб"
 
     def test_regex_replacement(self):
-        # Проверяем, что регулярки корректно передаются в движок
-        rules = [("[aeiou]", "*")]
+        # Проверяем, что регулярки корректно передаются в движок.
+        # Передаем уже скомпилированный паттерн!
+        rules = [(re.compile("[aeiou]"), "*", True)]
         assert ipa_to_ru.convert("cat", rules) == "c*t"
 
     def test_no_match(self):
-        rules = [("a", "а")]
+        rules = [("a", "а", False)]
         assert ipa_to_ru.convert("xyz", rules) == "xyz"
 
     def test_normalization(self):

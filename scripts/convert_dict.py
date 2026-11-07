@@ -5,7 +5,7 @@ from pathlib import Path
 
 # Пути относительно корня проекта
 PROJECT_ROOT = Path(__file__).parent.parent
-DICT_TXT = Path(__file__).parent / "en_dict.txt"
+DICT_TXT = PROJECT_ROOT / "data_src" / "en_dict.txt"
 DICT_PKL = PROJECT_ROOT / "src" / "eng_to_ru_transcriber" / "data" / "en_dict.pkl"
 
 

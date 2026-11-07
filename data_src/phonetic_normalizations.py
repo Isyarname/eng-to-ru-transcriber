@@ -11,6 +11,9 @@
 
 # Подстрочные замены (внутри слов, порядок важен!)
 SUBSTRING_NORMALIZATIONS: list[tuple[str, str]] = [
+
+    ("hw", "w"),
+
     # Дифтонги
     ("eɪ", "ej"),        # day → dej, make → mejk
     ("aɪ", "aj"),        # my → maj

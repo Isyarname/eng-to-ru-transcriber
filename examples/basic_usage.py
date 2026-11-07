@@ -26,7 +26,6 @@ def run_pipeline() -> None:
     t = Transcriber(custom_vocabulary=custom)
     print(f"📦 Создан: {t}")
 
-    t.reload_rules()
     result = t.transcribe(raw_text)
     print(f"📦 После транслитерации: {t}")
 

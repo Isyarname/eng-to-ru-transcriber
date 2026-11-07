@@ -1,60 +1,43 @@
 """Unit-тесты для rule_engine.py."""
+import re
 import pytest
 
-from eng_to_ru_transcriber.rule_engine import apply_rules, process_text, HAS_REGEX_SYMBOLS
-
-
-class TestHasRegexSymbols:
-    """Проверка детектора regex-символов."""
-
-    def test_detects_asterisk(self):
-        assert HAS_REGEX_SYMBOLS.search("a*") is not None
-
-    def test_detects_brackets(self):
-        assert HAS_REGEX_SYMBOLS.search("[abc]") is not None
-
-    def test_detects_parentheses(self):
-        assert HAS_REGEX_SYMBOLS.search("(a|b)") is not None
-
-    def test_detects_dot(self):
-        assert HAS_REGEX_SYMBOLS.search("a.b") is not None
-
-    def test_no_regex(self):
-        assert HAS_REGEX_SYMBOLS.search("abc") is None
-        assert HAS_REGEX_SYMBOLS.search("hello world") is None
+from eng_to_ru_transcriber.rule_engine import apply_rules, process_text
 
 
 class TestApplyRules:
     """Применение правил к тексту."""
 
     def test_simple_replacement(self):
-        rules = [("a", "x"), ("b", "y")]
+        rules = [("a", "x", False), ("b", "y", False)]
         assert apply_rules("ab", rules) == "xy"
 
     def test_regex_rule(self):
-        rules = [(r"a+", "X")]
+        # Передаем уже скомпилированный паттерн
+        rules = [(re.compile(r"a+"), "X", True)]
         assert apply_rules("aaa", rules) == "X"
 
     def test_mixed_rules(self):
-        rules = [("a", "x"), (r"b+", "Y")]
+        rules = [("a", "x", False), (re.compile(r"b+"), "Y", True)]
         assert apply_rules("abb", rules) == "xY"
 
     def test_order_matters(self):
         # Первое правило меняет "a" на "b", второе не должно сработать
-        rules = [("a", "b"), ("b", "c")]
+        rules = [("a", "b", False), ("b", "c", False)]
         assert apply_rules("a", rules) == "c"
 
     def test_empty_rules(self):
         assert apply_rules("hello", []) == "hello"
 
     def test_empty_text(self):
-        assert apply_rules("", [("a", "b")]) == ""
+        assert apply_rules("", [("a", "b", False)]) == ""
+
 
 class TestProcessText:
     """Полный процесс с нормализацией."""
 
     def test_basic(self):
-        rules = [("a", "x")]
+        rules = [("a", "x", False)]
         assert process_text("abc", rules) == "xbc"
 
     def test_unicode_normalization(self):

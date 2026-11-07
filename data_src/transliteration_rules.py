@@ -29,9 +29,8 @@ rules = '''
 
     ˈ->'
     ˌ->_
-    'CCCV->CCCV:
-    'CCV->CCV:
-    'CV->CV:
+    'CC->CC'
+    'C->C'
     'V->V:
     у:V->уV:
     :->_

@@ -1,5 +1,10 @@
 import itertools
 import re
+import functools
+
+
+# Заранее компилируем регулярное выражение для проверки символов регулярки
+HAS_REGEX_SYMBOLS = re.compile(r"[\*\+\?\{\}\[\]\(\)\^\$\|\\\.]")
 
 
 def parse(rules_str: str, transition_symbol="->") -> list:
@@ -111,6 +116,9 @@ def add_capitalized_pairs(pairs: list) -> list:
             capitalized.append((L_cap, R_cap))
     return capitalized + pairs
 
+@functools.lru_cache(maxsize=None)
+def _compile_regex(pattern: str):
+    return re.compile(pattern)
 
 def build_rules(rules_str: str, macros: dict) -> list:
     """
@@ -128,4 +136,11 @@ def build_rules(rules_str: str, macros: dict) -> list:
     for pair in parsed_pairs:
         expanded_rules.extend(expand(pair))
 
-    return expanded_rules
+    prepared_rules = []
+    for L, R in expanded_rules:
+        if HAS_REGEX_SYMBOLS.search(L):
+            prepared_rules.append((_compile_regex(L), R, True))
+        else:
+            prepared_rules.append((L, R, False))
+
+    return prepared_rules
