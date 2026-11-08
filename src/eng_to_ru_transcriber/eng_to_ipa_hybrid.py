@@ -1,6 +1,7 @@
 """Гибридный движок транскрипции: словарь исключений + rule_based_ipa."""
 from __future__ import annotations
 import re
+from functools import lru_cache
 from . import rule_based_ipa
 
 _WORD_PATTERN = re.compile(r"^[a-zA-Z']+$")
@@ -17,8 +18,9 @@ _SUFFIXES = sorted({
 }, key=len, reverse=True)
 
 MAX_DICT_WORD_LEN = 8
-_SPLIT_CACHE: dict[str, list[tuple[str, bool]]] = {}
 
+
+# ─────────────────────────── Токенизация ───────────────────────────
 
 def smart_lower(text: str) -> str:
     text = _ABBR_SPLIT.sub('-', text)
@@ -29,6 +31,16 @@ def smart_lower(text: str) -> str:
 def _tokenize(text: str) -> list[str]:
     return _TOKEN_PATTERN.findall(text)
 
+
+def _is_word_token(token: str) -> bool:
+    return bool(_WORD_PATTERN.match(token))
+
+
+def _is_abbreviation(token: str) -> bool:
+    return len(token) >= 2 and token.isupper()
+
+
+# ─────────────────────────── Суффиксы и разбиение ───────────────────────────
 
 def _find_suffix(word_lower: str) -> tuple[int, str] | None:
     for suffix in _SUFFIXES:
@@ -41,7 +53,7 @@ def _split_word_from_end(
     word: str,
     word_lower: str,
     boundary: int,
-    long_keys: set[str],
+    long_keys: frozenset[str],
 ) -> list[tuple[str, bool]]:
     if not long_keys:
         return [(word[:boundary], False)]
@@ -74,6 +86,81 @@ def _split_word_from_end(
     return segments
 
 
+@lru_cache(maxsize=10000)
+def _split_word_cached(
+    word: str,
+    word_lower: str,
+    boundary: int,
+    long_keys: frozenset[str],
+) -> tuple[tuple[str, bool], ...]:
+    return tuple(_split_word_from_end(word, word_lower, boundary, long_keys))
+
+
+# ─────────────────────────── Шаг 1: Разбиение токенов на сегменты ───────────────────────────
+
+def _build_word_segments(
+    tokens: list[str],
+    custom_exceptions: dict[str, str],
+    long_keys: frozenset[str],
+) -> dict[str, list[tuple[str, bool]]]:
+    """Разбивает каждый токен на сегменты (словарные и нет).
+
+    Возвращает словарь: слово → список сегментов [(текст, из_словаря?), ...]
+    """
+    word_segments: dict[str, list[tuple[str, bool]]] = {}
+
+    for token in tokens:
+        if not _is_word_token(token):
+            continue
+
+        word_lower = token.lower()
+        if word_lower in word_segments:
+            continue
+
+        # Сокращения не разбиваем
+        if _is_abbreviation(token):
+            word_segments[word_lower] = [(token, False)]
+            continue
+
+        # Слова из словаря исключений
+        if word_lower in custom_exceptions:
+            word_segments[word_lower] = [(token, True)]
+            continue
+
+        # Разбиваем по суффиксам
+        suffix_result = _find_suffix(word_lower)
+        if suffix_result:
+            boundary, suffix = suffix_result
+            segments = list(_split_word_cached(token, word_lower, boundary, long_keys))
+            segments.append((suffix, False))
+        else:
+            segments = list(_split_word_cached(token, word_lower, len(word_lower), long_keys))
+
+        word_segments[word_lower] = segments
+
+    return word_segments
+
+
+# ─────────────────────────── Шаг 2: Сбор неизвестных слов ───────────────────────────
+
+def _collect_unknown_words(
+    word_segments: dict[str, list[tuple[str, bool]]],
+) -> list[str]:
+    """Собирает уникальные сегменты, которых нет в словаре."""
+    unknown: list[str] = []
+    seen: set[str] = set()
+
+    for segments in word_segments.values():
+        for seg_text, is_dict in segments:
+            if not is_dict and seg_text not in seen:
+                unknown.append(seg_text)
+                seen.add(seg_text)
+
+    return unknown
+
+
+# ─────────────────────────── Шаг 3: Транскрипция неизвестных слов ───────────────────────────
+
 def _bulk_transcribe(
     words: list[str],
     transcription_rules: list[tuple[str, str]],
@@ -89,6 +176,8 @@ def _bulk_transcribe(
     return mapping
 
 
+# ─────────────────────────── Шаг 4: Сборка результата ───────────────────────────
+
 def _normalize_ipa_word(
     ipa_word: str,
     substring_norms: list[tuple[str, str]],
@@ -101,10 +190,44 @@ def _normalize_ipa_word(
     return ipa_word
 
 
+def _build_final_tokens(
+    tokens: list[str],
+    word_segments: dict[str, list[tuple[str, bool]]],
+    custom_exceptions: dict[str, str],
+    english_mapping: dict[str, str],
+    substring_norms: list[tuple[str, str]],
+    word_norms: dict[str, str],
+) -> list[str]:
+    """Собирает финальные токены: слова → IPA, остальное как есть."""
+    final_tokens: list[str] = []
+
+    for token in tokens:
+        if not _is_word_token(token):
+            final_tokens.append(token)
+            continue
+
+        word_lower = token.lower()
+        segments = word_segments[word_lower]
+        ipa_parts: list[str] = []
+
+        for seg_text, is_dict in segments:
+            if is_dict:
+                ipa_parts.append(custom_exceptions[seg_text.lower()])
+            else:
+                ipa_parts.append(english_mapping.get(seg_text, seg_text))
+
+        ipa_word = "".join(ipa_parts)
+        final_tokens.append(_normalize_ipa_word(ipa_word, substring_norms, word_norms))
+
+    return final_tokens
+
+
+# ─────────────────────────── Главная функция ───────────────────────────
+
 def transcribe(
     text: str,
     custom_exceptions: dict[str, str],
-    long_keys: set[str] | None,
+    long_keys: frozenset[str] | None,
     transcription_rules: list[tuple[str, str]],
     substring_norms: list[tuple[str, str]],
     word_norms: dict[str, str],
@@ -119,69 +242,26 @@ def transcribe(
 
     # Fallback для тестов и обратной совместимости
     if long_keys is None:
-        long_keys = {k for k in custom_exceptions if len(k) >= 4}
+        long_keys = frozenset(k for k in custom_exceptions if len(k) >= 4)
 
-    word_segments: dict[str, list[tuple[str, bool]]] = {}
+    # Шаг 1: Разбиваем токены на сегменты
+    word_segments = _build_word_segments(tokens, custom_exceptions, long_keys)
 
-    for token in tokens:
-        if not _WORD_PATTERN.match(token):
-            continue
+    # Шаг 2: Собираем неизвестные слова
+    unknown_words = _collect_unknown_words(word_segments)
 
-        word_lower = token.lower()
-        if word_lower in word_segments:
-            continue
+    # Шаг 3: Транскрибируем неизвестные слова
+    english_mapping = _bulk_transcribe(unknown_words, transcription_rules)
 
-        is_abbreviation = len(token) >= 2 and token.isupper()
-        if not is_abbreviation and word_lower in custom_exceptions:
-            word_segments[word_lower] = [(token, True)]
-            continue
-
-        if word_lower in _SPLIT_CACHE:
-            segments = _SPLIT_CACHE[word_lower]
-        else:
-            suffix_result = _find_suffix(word_lower)
-            if suffix_result:
-                boundary, suffix = suffix_result
-                segments = _split_word_from_end(token, word_lower, boundary, long_keys)
-                segments.append((suffix, False))
-            else:
-                segments = _split_word_from_end(token, word_lower, len(word_lower), long_keys)
-            _SPLIT_CACHE[word_lower] = segments
-
-        word_segments[word_lower] = segments
-
-    english_to_transcribe: list[str] = []
-    seen_english: set[str] = set()
-
-    for segments in word_segments.values():
-        for seg_text, is_dict in segments:
-            if not is_dict and seg_text not in seen_english:
-                english_to_transcribe.append(seg_text)
-                seen_english.add(seg_text)
-
-    english_mapping = _bulk_transcribe(english_to_transcribe, transcription_rules)
-
-    final_tokens: list[str] = []
-    for token in tokens:
-        if _WORD_PATTERN.match(token):
-            word_lower = token.lower()
-            segments = word_segments[word_lower]
-            ipa_parts: list[str] = []
-
-            for seg_text, is_dict in segments:
-                if is_dict:
-                    ipa_parts.append(custom_exceptions[seg_text.lower()])
-                else:
-                    ipa = english_mapping.get(seg_text, seg_text)
-                    ipa_parts.append(ipa)
-
-            final_tokens.append(_normalize_ipa_word("".join(ipa_parts), substring_norms, word_norms))
-        else:
-            final_tokens.append(token)
+    # Шаг 4: Собираем результат
+    final_tokens = _build_final_tokens(
+        tokens, word_segments, custom_exceptions,
+        english_mapping, substring_norms, word_norms,
+    )
 
     return "".join(final_tokens).strip()
 
 
 def clear_split_cache() -> None:
-    _SPLIT_CACHE.clear()
+    _split_word_cached.cache_clear()
     rule_based_ipa.clear_cache()

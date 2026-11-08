@@ -3,6 +3,7 @@ macros = {
 	"_V": "[aeiouy]",
 	"_C":"[bcdfghjklmnpqrstvwxz]",
 	"i?": "(i|)",
+	"t?": "(t|)",
     "!ʲ": "(?!ʲ)",
     "_":""
 
