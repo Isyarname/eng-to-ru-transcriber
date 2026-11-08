@@ -44,64 +44,49 @@ class TestTokenize:
 
 
 class TestNormalizeIpaWord:
-    """Нормализация IPA-слов."""
-
     def test_diphthong_ei(self):
-        # Передаем правило eɪ → ej явно
-        result = _normalize_ipa_word("deɪ", [("eɪ", "ej")], {})
-        assert result == "dej"
+        assert _normalize_ipa_word("deɪ", [("eɪ", "ej")], {}) == "dej"
 
     def test_diphthong_ai(self):
-        # Передаем правило aɪ → aj явно
-        result = _normalize_ipa_word("maɪ", [("aɪ", "aj")], {})
-        assert result == "maj"
+        assert _normalize_ipa_word("maɪ", [("aɪ", "aj")], {}) == "maj"
 
     def test_word_normalization(self):
-        # "tə" как целое слово → "tu"
-        result = _normalize_ipa_word("tə", [], {"tə": "tu"})
-        assert result == "tu"
+        assert _normalize_ipa_word("tə", [], {"tə": "tu"}) == "tu"
 
     def test_word_normalization_not_substring(self):
-        # "təmɔɹoʊ" НЕ должен превратиться в "tumɔɹoʊ"
-        result = _normalize_ipa_word("təmɔɹoʊ", [], {"tə": "tu"})
-        assert result == "təmɔɹoʊ"
+        assert _normalize_ipa_word("təmɔɹoʊ", [], {"tə": "tu"}) == "təmɔɹoʊ"
 
     def test_slash_removal(self):
-        result = _normalize_ipa_word("he/llo", [("/", "")], {})
-        assert result == "hello"
+        assert _normalize_ipa_word("he/llo", [("/", "")], {}) == "hello"
 
 
 class TestTranscribe:
-    """Полная транскрипция через гибридный движок."""
-
-    # Пустые аргументы для удобства тестирования
     _EMPTY_RULES = []
     _EMPTY_NORMS = ([], {})
 
     def test_empty(self):
-        assert transcribe("", {}, set(), self._EMPTY_RULES, *self._EMPTY_NORMS) == ""
+        assert transcribe("", {}, frozenset(), self._EMPTY_RULES, *self._EMPTY_NORMS) == ""
 
     def test_with_exceptions(self):
         exceptions = {"hello": "hɛˈloʊ", "world": "wɝːld"}
-        long_keys = {"hello", "world"}
+        long_keys = frozenset({"hello", "world"})
         result = transcribe("hello world", exceptions, long_keys, self._EMPTY_RULES, *self._EMPTY_NORMS)
         assert isinstance(result, str)
         assert len(result) > 0
 
     def test_preserves_punctuation(self):
         exceptions = {"hello": "hɛˈloʊ"}
-        long_keys = {"hello"}
+        long_keys = frozenset({"hello"})
         result = transcribe("hello!", exceptions, long_keys, self._EMPTY_RULES, *self._EMPTY_NORMS)
         assert "!" in result
 
     def test_mixed_known_unknown(self):
         exceptions = {"hello": "hɛˈloʊ"}
-        long_keys = {"hello"}
+        long_keys = frozenset({"hello"})
         result = transcribe("hello xyzzy", exceptions, long_keys, self._EMPTY_RULES, *self._EMPTY_NORMS)
         assert isinstance(result, str)
 
     def test_fallback_long_keys(self):
-        """Если long_keys=None, движок собирает его сам (для обратной совместимости)."""
         exceptions = {"hello": "hɛˈloʊ"}
         result = transcribe("hello", exceptions, None, self._EMPTY_RULES, *self._EMPTY_NORMS)
         assert isinstance(result, str)

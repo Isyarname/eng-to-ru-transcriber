@@ -70,53 +70,27 @@ Resources are loaded **once** in `__init__`. To pick up changed rules or diction
 ## 📂 Project structure
 
 ```
-eng-to-ru-transcriber/
-├── data_src/                               # Source data (not shipped)
-│   ├── en_dict.txt
-│   ├── eng_to_ipa_rules.py
-│   ├── phonetic_normalizations.py
-│   └── transliteration_rules.py
-├── docs/
-│   ├── ARCHITECTURE.md
-│   ├── CHANGELOG.md
-│   ├── CONTRIBUTING.md
-│   └── DSL.md
-├── examples/
-│   ├── basic_usage.py
-│   └── text.txt
-├── scripts/                                # Build-time tools (not shipped)
-│   ├── benchmark.py
-│   ├── build_rules.py                      # Compiles data_src/*.py → *.pkl
-│   ├── convert_dict.py                     # Compiles data_src/en_dict.txt → en_dict.pkl
-│   ├── dsl_translator.py                   # DSL compiler (used by build_rules.py)
-│   └── make-tree.py
-├── src/
-│   └── eng_to_ru_transcriber/
-│       ├── data/                           # Runtime data (shipped)
-│       │   ├── __init__.py
-│       │   ├── en_dict.pkl
-│       │   ├── eng_to_ipa_rules.pkl
-│       │   ├── phonetic_normalizations.pkl
-│       │   └── transliteration_rules.pkl
-│       ├── __init__.py
-│       ├── eng_to_ipa_hybrid.py
-│       ├── ipa_to_ru.py
-│       ├── rule_based_ipa.py
-│       ├── rule_engine.py
-│       └── transcriber.py
-├── tests/
-│   ├── conftest.py
-│   ├── test_dsl_translator.py
-│   ├── test_eng_to_ipa_hybrid.py
-│   ├── test_ipa_to_ru.py
-│   ├── test_rule_based_ipa.py
-│   ├── test_rule_engine.py
-│   └── test_transcriber.py
+ eng-to-ru-transcriber/
+├── data_src/                   # Source rules & dictionary (not shipped)
+├── docs/                       # Documentation
+├── examples/                   # Usage examples
+├── scripts/                    # Build & release tools (not shipped)
+│   ├── build_rules.py          # Compiles data_src/*.py → data/*.pkl
+│   ├── convert_dict.py         # Compiles data_src/en_dict.txt → data/en_dict.pkl
+│   └── ...
+├── src/eng_to_ru_transcriber/  # The library (this is what ships to PyPI)
+│   ├── data/*.pkl              # Compiled runtime data
+│   ├── __init__.py             # Public API
+│   ├── transcriber.py          # Orchestrator (entry point)
+│   ├── eng_to_ipa_hybrid.py    # EN → IPA (dictionary + rules)
+│   ├── rule_based_ipa.py       # Applies EN → IPA rules
+│   ├── ipa_to_ru.py            # Applies IPA → Cyrillic rules
+│   └── rule_engine.py          # Shared regex/literal rule executor
+├── tests/                      # Pytest suite
 ├── .gitignore
 ├── LICENSE
-├── README.md
-├── README.ru.md
-└── pyproject.toml
+├── README.md / README.ru.md
+└── pyproject.toml              # Metadata, build config
 ```
 
 ### Where things live

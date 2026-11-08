@@ -1,5 +1,9 @@
-"""English-to-Russian Phonetic Transcriber."""
+from importlib.metadata import version, PackageNotFoundError
 from .transcriber import Transcriber
 
-__version__ = "0.3.0"
-__all__ = ["Transcriber", "__version__"]
+try:
+    __version__ = version("eng-to-ru-transcriber")
+except PackageNotFoundError:
+    __version__ = "0.0.0-dev"
+
+__all__ = ["Transcriber"]

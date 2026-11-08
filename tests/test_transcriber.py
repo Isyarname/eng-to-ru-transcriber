@@ -6,7 +6,7 @@ from eng_to_ru_transcriber import Transcriber, __version__
 
 class TestPublicAPI:
     def test_version_defined(self):
-        assert __version__ == "0.3.0"
+        assert __version__
 
     def test_transcriber_class_exists(self):
         assert Transcriber is not None
@@ -23,7 +23,6 @@ class TestTranscriberClass:
         assert "dict=" in r
 
     def test_eager_loading(self):
-        """Все ресурсы загружаются в конструкторе, без отложенной загрузки."""
         t = Transcriber()
         assert t._transliteration_rules is not None
         assert t._eng_to_ipa_rules is not None
@@ -32,9 +31,9 @@ class TestTranscriberClass:
         assert t._word_norms is not None
 
     def test_long_keys_precomputed(self):
-        """Список длинных ключей для разбиения предвычислен."""
+        """Список длинных ключей для разбиения предвычислен (frozenset)."""
         t = Transcriber()
-        assert isinstance(t._long_keys, set)
+        assert isinstance(t._long_keys, frozenset)
         assert len(t._long_keys) > 0
 
     def test_resources_are_non_empty(self):
@@ -89,12 +88,11 @@ class TestCustomVocabulary:
         t = Transcriber()
         assert t._custom_vocabulary == {}
 
-# В классе TestCustomVocabulary
     def test_custom_vocabulary_is_copied(self):
         """Изменение исходного dict не влияет на объект."""
         custom = {"word": "w"}
         t = Transcriber(custom_vocabulary=custom)
-        custom["fake_key_xyzzy"] = "n"  # уникальный ключ, которого нет в словаре
+        custom["fake_key_xyzzy"] = "n"
         assert "fake_key_xyzzy" not in t._custom_vocabulary
         assert "fake_key_xyzzy" not in t._merged_vocabulary
 
