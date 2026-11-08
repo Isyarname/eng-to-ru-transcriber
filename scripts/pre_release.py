@@ -203,7 +203,28 @@ def reinstall_editable() -> bool:
 
 def run_tests() -> bool:
     print("🧪 Запуск тестов...")
-    return _run([sys.executable, "-m", "pytest", "-v"]) == 0
+    result = subprocess.run(
+        [sys.executable, "-m", "pytest", "-q"],
+        cwd=PROJECT_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode == 0:
+        # Вытаскиваем "N passed" из последней непустой строки
+        summary = ""
+        for line in reversed(result.stdout.strip().splitlines()):
+            if "passed" in line or "failed" in line:
+                summary = line.strip()
+                break
+        _ok(f"Тесты прошли: {summary}" if summary else "Тесты прошли")
+        return True
+
+    # Упали — показываем всё, что pytest напечатал
+    _err("Тесты упали:")
+    print(result.stdout)
+    if result.stderr:
+        print(result.stderr)
+    return False
 
 
 # ─────────────────────────── Главная ───────────────────────────
