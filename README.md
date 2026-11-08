@@ -19,6 +19,7 @@ Sometimes you just need to instantly write English words, names, or slang using 
 ## Features
 
 - **Practical transcription:** adapts IPA pronunciation to match Russian orthography rules, rather than just letter-by-letter replacement.
+- **Vowel length indication:** long vowels are marked with an acute accent (e.g., `и́`, `у́`), preserving phonetic accuracy.
 - **Zero dependencies & 100% offline:** no heavy ML models or cloud APIs. Works instantly.
 - **Deterministic:** the same word always yields the exact same result.
 - **Hybrid engine:** uses a built-in 120k+ word dictionary for common words and a fast rule-based engine for everything else.
@@ -40,18 +41,11 @@ pip install eng-to-ru-transcriber
 from eng_to_ru_transcriber import Transcriber
 
 t = Transcriber()
-print(t.transcribe("Hello world")) 
-# → Хэлоу уорлд
+print(t.transcribe("Hello, URL!")) 
+# → халоу, ю́а́эл!
 ```
 
-### Handling Slang and Nicknames
-
-The library automatically handles CamelCase and abbreviations, making it perfect for gaming nicknames or tech slang:
-
-```python
-print(t.transcribe("myURL and MacBook")) 
-# → май-урл энд макбук
-```
+*Abbreviations (like URL) are automatically detected and read letter-by-letter. The acute accent (e.g., `ю́`) marks vowel length, not stress.*
 
 ### Custom Vocabulary
 
