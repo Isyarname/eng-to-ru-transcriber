@@ -7,14 +7,19 @@ A lightweight Python library for quick and deterministic practical transcription
 ## Why this exists
 
 **This library is built for:**
-- **Adapting slang and neologisms** (e.g., *crush*, *vibe*, *hype*).
-- **Transcribing names, usernames, and brand names.**
+- **Transcribing names, usernames, brand names, and specific technical terms** (e.g., *Daenerys*, *MacBook*, *Kubernetes*).
+- **Fast TTS pipelines**, where instant, offline processing without heavy ML models is critical.
 
 Modern translation tools are powerful, but they are overkill for simple tasks:
-- **Cloud APIs** (like Google Translate or DeepL) require an internet connection and have rate limits.
-- **Neural networks** (even local ones) are heavy, slow to initialize, and can produce unpredictable results.
+- **Cloud APIs** (like Google Translate) require an internet connection and have rate limits.
+- **Neural networks** are heavy, slow to initialize, and can produce unpredictable results.
 
-Sometimes you just need to instantly write English words, names, or slang using the Russian alphabet without waiting for models to load.
+Sometimes you just need to instantly write English names or terms using the Russian alphabet without waiting for models to load.
+
+## Limitations
+
+- **Context-free:** The library does not perform Part-of-Speech (POS) tagging or syntactic analysis. For homographs with multiple pronunciations (like *read* or *use*), it will use the first dictionary entry.
+- **Not a translator:** It transcribes *sound*, not *meaning*.
 
 ## Features
 
@@ -49,19 +54,20 @@ print(t.transcribe("Hello, URL!"))
 
 ### Custom Vocabulary
 
-You can easily override the pronunciation of specific words (names, brands, or specific slang) by passing a dictionary:
+You can easily override the pronunciation of specific words. The dictionary accepts both ready Cyrillic text and IPA phonetic notation:
 
 ```python
 from eng_to_ru_transcriber import Transcriber
 
-# Teach the transcriber your custom terms
+# You can mix formats: Cyrillic and IPA
 custom_vocabulary = {
-    "python": "ˈpaɪθɑn",
-    "kubernetes": "ˌkjuːbəˈnɛtɪs"
+    "python": "пайтон",           # Cyrillic
+    "kubernetes": "ˌkjuːbəˈnɛtɪs" # IPA
 }
 
 t = Transcriber(custom_vocabulary=custom_vocabulary)
 print(t.transcribe("I love Python and Kubernetes"))
+# → ай лав пайтон энд къю́банэтис
 ```
 
 ## Testing
