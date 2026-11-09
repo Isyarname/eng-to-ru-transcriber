@@ -73,7 +73,7 @@ python -m pytest
 
 ## Data Sources
 
-Based on curated IPA data from OpenWiktionary.
+English IPA data is derived from [open-dict-data/ipa-dict](https://github.com/open-dict-data/ipa-dict) (MIT License, Copyright © 2016 dohliam).
 
 ## License
 
