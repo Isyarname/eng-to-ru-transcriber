@@ -247,45 +247,45 @@ def main() -> None:
         if not rebuild_rules():
             sys.exit(1)
 
-    # 2. Версии совпадают
+    # 2. Очистка кэша и dist
+    if not args.no_clean:
+        clean_dist()
+        clean_cache()
+
+    # 3. Переустановка пакета (чтобы importlib.metadata / кэш подхватили новую версию)
+    if not args.no_reinstall:
+        if not reinstall_editable():
+            _err("Не удалось переустановить пакет")
+            sys.exit(1)
+        _ok("Пакет переустановлен")
+
+    # 4. Проверка версий (теперь они точно синхронизированы)
     ok, version = check_versions()
     if not ok or version is None:
         sys.exit(1)
 
-    # 3. .pkl актуальны
+    # 5. .pkl актуальны
     if not check_rules_compiled():
         print("\nПодсказка: запусти с --rebuild, чтобы пересобрать .pkl автоматически")
         sys.exit(1)
 
-    # 4. CHANGELOG содержит запись для версии
+    # 6. CHANGELOG содержит запись для версии
     if not check_changelog(version):
         sys.exit(1)
 
-    # 5. README (warn или fail в strict)
+    # 7. README (warn или fail в strict)
     readme_ok = check_readme()
     if not readme_ok and args.strict:
         _err("README проверка упала (--strict)")
         sys.exit(1)
 
-    # 6. Git status (warn или fail в strict)
+    # 8. Git status (warn или fail в strict)
     git_ok = check_git_clean()
     if not git_ok and args.strict:
         _err("Git содержит незакоммиченные изменения (--strict)")
         sys.exit(1)
     if not git_ok:
         print("   ⚠️  Сборка возможна, но код в git не совпадает с тем, что уйдёт на PyPI.")
-
-    # 7. Очистка
-    if not args.no_clean:
-        clean_dist()
-        clean_cache()
-
-    # 8. Переустановка (чтобы metadata.version() подхватил новую версию)
-    if not args.no_reinstall:
-        if not reinstall_editable():
-            _err("Не удалось переустановить пакет")
-            sys.exit(1)
-        _ok("Пакет переустановлен")
 
     # 9. Тесты
     if not args.no_test:
