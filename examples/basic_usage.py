@@ -18,12 +18,7 @@ def run_pipeline() -> None:
 
     raw_text = TEXT_PATH.read_text(encoding="utf-8")
 
-    # Создаём объект с пользовательскими исключениями
-    custom = {
-        "python": "ˈpaɪθɑn",
-        "docker": "ˈdɑkər",
-    }
-    t = Transcriber(custom_vocabulary=custom)
+    t = Transcriber()
     print(f"📦 Создан: {t}")
 
     result = t.transcribe(raw_text)
