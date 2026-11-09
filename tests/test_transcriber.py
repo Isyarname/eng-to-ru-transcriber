@@ -66,6 +66,22 @@ class TestCustomVocabulary:
         t = Transcriber(custom_vocabulary=custom)
         assert t._custom_vocabulary == custom
 
+    def test_custom_vocabulary_mixed_formats(self):
+        """Можно смешивать IPA и кириллицу в одном словаре."""
+        custom = {
+            "python": "пайтон",               # кириллица
+            "kubernetes": "ˌkjuːbəˈnɛtɪs"     # IPA
+        }
+        t = Transcriber(custom_vocabulary=custom)
+        result = t.transcribe("python kubernetes")
+
+        # python должен остаться пайтоном
+        assert "пайтон" in result
+        # kubernetes должен сконвертироваться в кириллицу (точный вид зависит от правил,
+        # но латиницы и IPA-символов там быть не должно)
+        assert "kju" not in result
+        assert any("\u0400" <= ch <= "\u04FF" for ch in result)
+
     def test_custom_vocabulary_supplements_builtin(self):
         custom = {"myword": "maɪwɝːd"}
         t = Transcriber(custom_vocabulary=custom)
