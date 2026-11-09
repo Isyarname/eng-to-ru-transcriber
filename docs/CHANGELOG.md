@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-11-09
+
+### Documentation
+- Fixed data attribution: IPA dictionary is derived from `open-dict-data/ipa-dict` (MIT), not OpenWiktionary.
+- Added `THIRD_PARTY_LICENSES.md` with the original MIT license text for the data.
+
 ## [0.3.1] - 2026-11-08
 
 ### Documentation
