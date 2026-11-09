@@ -57,7 +57,7 @@ from eng_to_ru_transcriber import Transcriber
 # Учим транскриптор вашим терминам
 custom_vocabulary = {
     "python": "ˈpaɪθɑn",
-    "kubernetes": "ˌk(j)uːbəˈnɛtɪs"
+    "kubernetes": "ˌkjuːbəˈnɛtɪs"
 }
 
 t = Transcriber(custom_vocabulary=custom_vocabulary)
