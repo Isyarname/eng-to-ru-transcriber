@@ -2,7 +2,7 @@
 
 Thank you for your interest in contributing to eng-to-ru-transcriber!
 
-## 🚀 Development Setup
+## 🚀 Development setup
 
 ```bash
 git clone https://github.com/Isyarname/eng-to-ru-transcriber
@@ -10,86 +10,107 @@ cd eng-to-ru-transcriber
 pip install -e ".[dev]"
 ```
 
-The `-e` flag installs the package in editable mode, so changes to the source code are immediately reflected without reinstalling.
+The `-e` flag installs the package in editable mode, so changes to Python source files are immediately visible without reinstalling.
 
-## 🧪 Running Tests
+## 🧪 Running tests
 
 ```bash
-pytest tests/ -v
+python -m pytest tests/ -v
 ```
 
 All tests must pass before submitting a PR.
 
-## 📝 How to Add a New Transliteration Rule
+## 📝 Changing rules
 
-1. Open `src/eng_to_ru_transcriber/data/transliteration_rules.py`
-2. Add your rule in the format `source -> result`:
-   ```python
-   rules = """
-   # Existing rules...
-   θ -> с
-   ð -> з
-   """
-   ```
-3. Reload rules in your code:
-   ```python
-   from eng_to_ru_transcriber import Transcriber
-   
-   t = Transcriber()
-   t.reload_rules()  # Recompiles rules and updates cache
-   ```
-4. Run tests:
-   ```bash
-   python -m pytest
-   ```
-5. Create a PR with a description of the new rule and examples.
+Runtime rule data is compiled ahead of time into `.pkl` files. Source rules are stored in `data_src/` and are not used directly at runtime.
 
-## 📖 How to Update the Dictionary
+To change transliteration or transcription rules:
 
-The source dictionary is stored as a plain text file (`scripts/en_dict.txt`) and compiled into a pickle for faster loading.
+1. Edit the relevant source file under `data_src/`, for example `data_src/transliteration_rules.py`.
+2. Rebuild the compiled rule data:
 
-1. Edit `scripts/en_dict.txt` (format: `word \t IPA_transcription`).
-2. Run the converter script to regenerate the `.pkl` file:
-   ```bash
-   python scripts/convert_dict.py
-   ```
+```bash
+python scripts/build_rules.py
+```
 
-## 🔀 Git Workflow
+3. Create a new `Transcriber` instance or restart your process so the updated compiled data is loaded.
+
+With an editable installation, reinstalling the package after rebuilding is not required.
+
+4. Run the tests:
+
+```bash
+python -m pytest
+```
+
+Do not edit generated `.pkl` files by hand. If the repository tracks the generated files, commit them together with the source changes.
+
+## 📖 Updating the dictionary
+
+The source dictionary is stored as a plain text file and compiled into a pickle for faster loading.
+
+1. Edit `data_src/en_dict.txt` using the existing format:
+
+```text
+word<TAB>IPA_transcription
+```
+
+2. Regenerate the dictionary data:
+
+```bash
+python scripts/convert_dict.py
+```
+
+3. Create a new `Transcriber` instance or restart your process.
+4. Run the tests:
+
+```bash
+python -m pytest
+```
+
+## 🔀 Git workflow
 
 1. Create a branch for your changes:
-   ```bash
-   git checkout -b feature/add-th-rule
-   ```
+
+```bash
+git checkout -b feature/add-th-rule
+```
+
 2. Make your changes and commit:
-   ```bash
-   git add .
-   git commit -m "Add θ → с transliteration rule"
-   ```
+
+```bash
+git add .
+git commit -m "Add θ → с transliteration rule"
+```
+
 3. Push to your fork:
-   ```bash
-   git push origin feature/add-th-rule
-   ```
+
+```bash
+git push origin feature/add-th-rule
+```
+
 4. Open a Pull Request on GitHub.
 
-## 📋 Pull Request Checklist
+## 📋 Pull request checklist
 
 Before submitting your PR, make sure:
 
-- [ ] Tests pass: `pytest`
-- [ ] Code follows the existing style (4 spaces, type hints)
+- [ ] Tests pass: `python -m pytest`
+- [ ] Code follows the existing style
+- [ ] Compiled data is regenerated if source rules or dictionary data changed
 - [ ] Added tests for new functionality (if applicable)
 - [ ] Updated documentation (if applicable)
 - [ ] PR description explains what changed and why
 
-## 🐛 Reporting Issues
+## 🐛 Reporting issues
 
 If you find a bug or have a feature request:
 
-1. Check existing issues to avoid duplicates
+1. Check existing issues to avoid duplicates.
 2. Create a new issue with:
-   - Clear description
-   - Steps to reproduce (for bugs)
-   - Expected vs actual behavior
-   - Python version and OS
+   - a clear description;
+   - steps to reproduce (for bugs);
+   - expected vs actual behavior;
+   - Python version and OS.
 
 Thank you for contributing! 🎉
