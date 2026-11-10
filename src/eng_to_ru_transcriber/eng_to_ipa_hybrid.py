@@ -7,8 +7,15 @@ from . import rule_based_ipa
 _WORD_PATTERN = re.compile(r"^[a-zA-Z']+$")
 _TOKEN_PATTERN = re.compile(r"[a-zA-Z']+|[^a-zA-Z']+")
 
-_ABBR_SPLIT = re.compile(r'(?<=[a-zа-яё])(?=[A-ZА-ЯЁ]{2,})')
-_CAMEL_CASE = re.compile(r'([A-ZА-ЯЁ])(?=[a-zа-яё])')
+# Регулярки для умного разбиения и нормализации регистра
+# 1. Граница строчная → заглавная (начало нового слова/аббревиатуры)
+_CAMEL_BOUNDARY = re.compile(r'(?<=[a-z])(?=[A-Z])')
+# 2. Граница аббревиатура → слово (заглавная, за которой идут строчные)
+_ABBR_WORD_BOUNDARY = re.compile(r'(?<=[A-Z])(?=[A-Z][a-z])')
+# 3. Соседние заглавные буквы (разделяем буквы аббревиатуры)
+_UPPER_SEQUENCE = re.compile(r'(?<=[A-Z])(?=[A-Z])')
+# 4. Заглавная перед строчными (кандидат на понижение регистра)
+_WORD_START = re.compile(r'([A-Z])(?=[a-z])')
 
 _SUFFIXES = sorted({
     "ment", "ness", "tion", "sion", "able", "ible",
@@ -23,8 +30,10 @@ MAX_DICT_WORD_LEN = 8
 # ─────────────────────────── Токенизация ───────────────────────────
 
 def smart_lower(text: str) -> str:
-    text = _ABBR_SPLIT.sub('-', text)
-    text = _CAMEL_CASE.sub(lambda m: m.group(1).lower(), text)
+    text = _CAMEL_BOUNDARY.sub('-', text)
+    text = _ABBR_WORD_BOUNDARY.sub('-', text)
+    text = _UPPER_SEQUENCE.sub('-', text)
+    text = _WORD_START.sub(lambda m: m.group(1).lower(), text)
     return text
 
 

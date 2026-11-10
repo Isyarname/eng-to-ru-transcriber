@@ -47,10 +47,10 @@ from eng_to_ru_transcriber import Transcriber
 
 t = Transcriber()
 print(t.transcribe("Hello, URL!")) 
-# → халоу, ю́а́эл!
+# → халоу, ю-ар-эл!
 ```
 
-*Abbreviations (like URL) are automatically detected and read letter-by-letter. The acute accent (e.g., `ю́`) marks vowel length, not stress.*
+*Abbreviations (like URL) are automatically detected and read letter-by-letter.*
 
 ### Custom Vocabulary
 
