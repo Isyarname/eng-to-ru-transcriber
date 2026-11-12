@@ -5,6 +5,13 @@ from pathlib import Path
 
 from eng_to_ru_transcriber import Transcriber
 
+import sys
+
+# Принудительно включаем UTF-8 для Windows, чтобы эмодзи работали
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+
 
 EXAMPLES_DIR = Path(__file__).parent
 TEXT_PATH = EXAMPLES_DIR / "text.txt"
