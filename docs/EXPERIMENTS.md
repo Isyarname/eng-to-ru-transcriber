@@ -4,7 +4,7 @@ This document records failed experiments and architectural decisions to prevent 
 
 ---
 
-## 1. Why eng-to-ipa and g2p_en were rejected
+## 1. Why eng-to-ipa and g2p-en were rejected
 
 An attempt was made to implement a context-aware mode to resolve homographs (like *read* /riːd/ vs /rɛd/) and improve OOV (Out-of-Vocabulary) words. The idea was to delegate the EN → IPA step to an external G2P library (`eng_to_ipa`, and later `g2p_en`) instead of using the fast hybrid engine.
 
