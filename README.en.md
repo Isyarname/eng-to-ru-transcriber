@@ -1,6 +1,6 @@
 # Practical English-Russian Transcription
 
-[Читать на русском языке](https://github.com/Isyarname/eng-to-ru-transcriber/blob/main/README.ru.md)
+[Читать на русском языке](https://github.com/Isyarname/eng-to-ru-transcriber/blob/main/README.md)
 
 A lightweight Python library for quick and deterministic practical transcription of English words using the Russian alphabet.
 

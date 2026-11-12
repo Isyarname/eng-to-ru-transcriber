@@ -1,6 +1,6 @@
 # Практическая англо-русская транскрипция
 
-[Read in English](https://github.com/Isyarname/eng-to-ru-transcriber/blob/main/README.md)
+[Read in English](https://github.com/Isyarname/eng-to-ru-transcriber/blob/main/README.en.md)
 
 Легковесная Python-библиотека для быстрой и предсказуемой практической транскрипции английских слов русским алфавитом.
 
