@@ -1,173 +1,159 @@
-# Project Architecture
+# Архитектура проекта
 
-This document describes the internal design of the library for developers and contributors.
+Этот документ описывает внутреннее устройство библиотеки для разработчиков и контрибьюторов.
 
-## 📐 How it works
+## 📐 Как это работает
 
 ```text
-[Input text]
+[Входной текст]
         │
         ▼
- [Tokenization]
-   └─ module: eng_to_ipa_hybrid.py
+ [Токенизация]
+   └─ модуль: eng_to_ipa_hybrid.py
         │
         ▼
- [Lookup in merged dictionary]
-   └─ module: eng_to_ipa_hybrid.py
-   └─ data:   en_dict.pkl + custom_vocabulary
+ [Поиск в объединённом словаре]
+   └─ модуль: eng_to_ipa_hybrid.py
+   └─ данные: en_dict.pkl + custom_vocabulary
         │
-        ├── Found ───────────────────────────────────────────────────────────────┐
-        │                                                                        │
-        └── Not found ──► [EN → IPA Transcription]                               │
-                                 └─ module: rule_based_ipa.py                    │
-                                 └─ data:   eng_to_ipa_rules.pkl                 │
-                                 │                                               │
-                                 ▼                                               │
-                          [IPA text] ◄───────────────────────────────────────────┘
+        ├── Найдено ────────────────────────────────────────────────────────────┐
+        │                                                                       │
+        └── Не найдено ──► [Транскрипция EN → IPA]                              │
+                                 └─ модуль: rule_based_ipa.py                   │
+                                 └─ данные: eng_to_ipa_rules.pkl                │
+                                 │                                              │
+                                 ▼                                              │
+                          [Текст IPA] ◄─────────────────────────────────────────┘
                                  │
                                  ▼
-                          [IPA Normalization]
-                                 └─ module: eng_to_ipa_hybrid.py
-                                 └─ data:   phonetic_normalizations.pkl
+                          [Нормализация и Транслитерация IPA → Кириллица]
+                                 └─ модуль: ipa_to_ru.py
+                                 └─ данные: transliteration_rules.pkl
                                  │
                                  ▼
-                          [IPA → Cyrillic Transliteration]
-                                 └─ module: ipa_to_ru.py
-                                 └─ data:   transliteration_rules.pkl
-                                 │
-                                 ▼
-                          [Cyrillic text]
+                          [Текст на кириллице]
 ```
 
-Shared core:
+Общее ядро:
 
 ```text
 rule_engine.py
 ```
 
-Executes the compiled rules for both EN → IPA and IPA → Cyrillic stages.
+Применяет скомпилированные правила как для этапа EN → IPA, так и для IPA → Кириллица.
 
-## 🔄 Processing pipeline
+## 🔄 Пайплайн обработки
 
-### 1. `Transcriber` initialization
+### 1. Инициализация `Transcriber`
 
-All resources are loaded eagerly in the constructor. The constructor either returns a fully working object or raises; there is no half-initialized state.
+Все ресурсы загружаются сразу в конструкторе. Конструктор либо возвращает полностью готовый объект, либо выбрасывает исключение; промежуточного состояния не существует.
 
-- **IPA → Cyrillic rules.** Loaded from `data/transliteration_rules.pkl` (compiled at build time).
-- **English → IPA rules.** Loaded from `data/eng_to_ipa_rules.pkl`.
-- **Phonetic normalizations.** Loaded from `data/phonetic_normalizations.pkl`.
-- **Dictionary.** `data/en_dict.pkl` is deserialized into `dict[str, str]` and stored in `_en_dict`.
-- **Merged vocabulary.** Built once: `_merged_vocabulary = {**_en_dict, **_custom_vocabulary}` (custom overrides win). If `custom_vocabulary` is empty, `_merged_vocabulary` is a reference to `_en_dict` (no copy).
-- **Long keys.** Precomputed frozenset of merged-dictionary keys with length ≥ 4, used for greedy word splitting of unknown words. Computed once and stored in `_long_keys`.
+- **Правила IPA → Кириллица.** Загружаются из `data/transliteration_rules.pkl`.
+- **Правила English → IPA.** Загружаются из `data/eng_to_ipa_rules.pkl`.
+- **Словарь.** `data/en_dict.pkl` десериализуется в `dict[str, str]` и сохраняется в `_en_dict`.
+- **Объединенный словарь.** Собирается один раз: `_merged_vocabulary = {**_en_dict, **_custom_vocabulary}` (пользовательский словарь имеет приоритет). Если `custom_vocabulary` пуст, `_merged_vocabulary` является ссылкой на `_en_dict` (без копирования).
+- **Длинные ключи (Long keys).** Заранее вычисленный `frozenset` ключей объединенного словаря длиной ≥ 4, используемый для жадного разбиения незнакомых слов. Вычисляется один раз и сохраняется в `_long_keys`.
 
-If a required resource is missing, `FileNotFoundError` is raised from the constructor. Corrupt resource data may raise a pickle-related exception.
+Если обязательный ресурс отсутствует, конструктор выбрасывает `FileNotFoundError`. Поврежденные данные могут вызвать исключение при чтении pickle.
 
-To use different resources or a different custom vocabulary, create a new `Transcriber` instance.
+Для использования других ресурсов или другого пользовательского словаря создайте новый экземпляр `Transcriber`.
 
-### 2. `transcribe()` call
+### 2. Вызов `transcribe()`
 
-`eng_to_ipa_hybrid.transcribe()` tokenizes the input, splits unknown words using `_long_keys`, replaces known words and dictionary segments with IPA, transcribes the rest with `rule_based_ipa`, applies phonetic normalizations, and returns IPA text.
+`eng_to_ipa_hybrid.transcribe()` разбивает входной текст на токены, разбивает незнакомые слова с использованием `_long_keys`, заменяет известные слова и сегменты словаря на IPA, транскрибирует остальное с помощью `rule_based_ipa` и возвращает текст IPA.
 
-`ipa_to_ru.convert()` applies the compiled transliteration rules to produce Cyrillic.
+`ipa_to_ru.convert()` применяет скомпилированные правила транслитерации (включая нормализацию дифтонгов) для получения кириллицы.
 
-## 📂 Project structure
+## 📂 Структура проекта
 
 ```text
 eng-to-ru-transcriber/
-├── data_src/                   # Source rules & dictionary (not shipped)
-├── docs/                       # Documentation
-├── examples/                   # Usage examples
-├── scripts/                    # Build & release tools (not shipped)
-│   ├── build_rules.py          # Compiles data_src/*.py → data/*.pkl
-│   ├── convert_dict.py         # Compiles data_src/en_dict.txt → data/en_dict.pkl
+├── data_src/                   # Исходники правил и словаря (не поставляются)
+├── docs/                       # Документация
+├── examples/                   # Примеры использования
+├── scripts/                    # Инструменты сборки и релиза (не поставляются)
+│   ├── build_rules.py          # Компилирует data_src/*.py → data/*.pkl
+│   ├── convert_dict.py         # Компилирует data_src/en_dict.txt → data/en_dict.pkl
 │   └── ...
-├── src/eng_to_ru_transcriber/  # The library (this is what ships to PyPI)
-│   ├── data/*.pkl              # Compiled runtime data
-│   ├── __init__.py             # Public API
-│   ├── transcriber.py          # Orchestrator (entry point)
-│   ├── eng_to_ipa_hybrid.py    # EN → IPA (dictionary + rules)
-│   ├── rule_based_ipa.py       # Applies EN → IPA rules
-│   ├── ipa_to_ru.py            # Applies IPA → Cyrillic rules
-│   └── rule_engine.py          # Shared regex/literal rule executor
-├── tests/                      # Pytest suite
+├── src/eng_to_ru_transcriber/  # Библиотека (то, что попадает на PyPI)
+│   ├── data/*.pkl              # Скомпилированные данные для рантайма
+│   ├── __init__.py             # Публичный API
+│   ├── transcriber.py          # Оркестратор (точка входа)
+│   ├── eng_to_ipa_hybrid.py    # EN → IPA (словарь + правила)
+│   ├── rule_based_ipa.py       # Применяет правила EN → IPA
+│   ├── ipa_to_ru.py            # Применяет правила IPA → Кириллица
+│   └── rule_engine.py          # Общий исполнитель правил (regex/литералы)
 ├── .gitignore
 ├── LICENSE
 ├── README.md
-└── pyproject.toml              # Metadata, build config
+└── pyproject.toml              # Метаданные, конфигурация сборки
 ```
 
-### Where things live
+### Что где лежит
 
-| What | Where | Why |
+| Что | Где | Зачем |
 |---|---|---|
-| Source code | `src/eng_to_ru_transcriber/` | src-layout — PyPA standard |
-| Compiled runtime data | `src/eng_to_ru_transcriber/data/*.pkl` | Included in wheel at build time |
-| Source rules & dictionary | `data_src/` | Human-editable, not shipped |
-| Build tools | `scripts/` | Build-time only, not shipped |
-| Sample text | `examples/text.txt` | Demo, not a package resource |
+| Исходный код | `src/eng_to_ru_transcriber/` | src-layout — стандарт PyPA |
+| Скомпилированные данные | `src/eng_to_ru_transcriber/data/*.pkl` | Включаются в wheel при сборке |
+| Исходники правил и словаря | `data_src/` | Удобны для ручного редактирования, не поставляются |
+| Инструменты сборки | `scripts/` | Только для этапа сборки, не поставляются |
+| Пример текста | `examples/text.txt` | Демо, не является ресурсом пакета |
 
-## 🏗️ Architectural decisions
+## 🏗️ Архитектурные решения
 
-### Why a `Transcriber` class instead of a function?
+### Почему класс `Transcriber`, а не функция?
 
-The main reason is resource lifecycle. The dictionary and rule data are loaded once during initialization and reused by every `transcribe()` call.
+Главная причина — жизненный цикл ресурсов. Словарь и данные правил загружаются один раз при инициализации и переиспользуются при каждом вызове `transcribe()`.
 
-A plain function would either reload resources on every call or require hidden global state. The class makes the loaded state explicit and allows different instances to use different custom vocabularies.
+Обычная функция либо перезагружала бы ресурсы при каждом вызове, либо требовала скрытого глобального состояния. Класс делает загруженное состояние явным и позволяет разным экземплярам использовать разные пользовательские словари.
 
-### Why eager resource loading?
+### Почему загрузка ресурсов при инициализации?
 
-- **Faster transcription.** Loading rules and the dictionary during initialization ensures that every `transcribe()` call is fast. The user does not pay I/O cost mid-processing.
-- **Simpler internals.** Resources are always present; getters are trivial, and `repr()` simply reports counts. There is no `Optional[...]` state.
-- **Predictable lifecycle.** All I/O happens exactly once at object creation.
+- **Быстрая транскрипция.** Загрузка правил и словаря во время инициализации гарантирует, что каждый вызов `transcribe()` будет быстрым. Пользователь не платит за I/O в середине обработки.
+- **Простота внутри.** Ресурсы всегда на месте; геттеры тривиальны, а `repr()` просто выводит их количество. Никаких состояний `Optional[...]`.
+- **Предсказуемый жизненный цикл.** Весь ввод/вывод происходит ровно один раз при создании объекта.
 
-The cost is about 100 ms per `Transcriber()` (pickle load). For TTS pipelines and CLI tools, this is usually not an issue.
+Плата за это — около 60 мс на создание `Transcriber()` (загрузка pickle). Для TTS-пайплайнов и CLI-утилит это обычно не проблема.
 
-### Why merge `custom_vocabulary` in `__init__`?
+### Почему `custom_vocabulary` объединяется в `__init__`?
 
-`custom_vocabulary` is static: it is provided once at construction time. Merging it with the built-in dictionary on every `transcribe()` call would copy 125k keys per call — a catastrophic performance regression. Merging once in `__init__` eliminates this entirely.
+`custom_vocabulary` статичен: он передается один раз при создании. Объединение его со встроенным словарем при каждом вызове `transcribe()` копировало бы 125 тысяч ключей за вызов — катастрофическая просадка производительности. Объединение один раз в `__init__` полностью устраняет эту проблему.
 
-### Why precompute `long_keys`?
+### Зачем предвычислять `long_keys`?
 
-`_split_word_from_end` needs the set of dictionary keys with length ≥ 4 to split unknown words. Building this set from 125k keys on every `transcribe()` call would cost around 15 ms regardless of input size. Computing it once in `__init__` reduces per-call cost to about 0.07 ms (≈200× faster).
+`_split_word_from_end` нужен набор ключей словаря длиной ≥ 4 для разбиения незнакомых слов. Создание этого набора из 125 тысяч ключей при каждом вызове `transcribe()` стоило бы около 15 мс независимо от размера ввода. Вычисление один раз в `__init__` снижает затраты на вызов до ~0.07 мс (примерно в 200 раз быстрее).
 
-### Why does the custom vocabulary supplement the built-in dictionary?
+### Почему пользовательский словарь дополняет встроенный?
 
-The built-in dictionary contains 125k+ words. If the custom vocabulary replaced it, users would have to copy all needed words. Supplementation lets you override specific words (names, brands, terms) while keeping standard functionality intact.
+Встроенный словарь содержит 125 000+ слов. Если бы пользовательский словарь заменял его, пользователям пришлось бы копировать все нужные слова. Дополнение позволяет переопределять конкретные слова (имена, бренды, термины), сохраняя стандартную функциональность.
 
-### Why src-layout?
+### Почему src-layout?
 
-It protects against accidentally importing the local folder instead of the installed version. This follows the “test what you ship” principle.
+Это защищает от случайного импорта локальной папки вместо установленной версии. Соблюдается принцип «тестируй то, что поставляешь».
 
-### Why two types of IPA normalization?
+### Почему нормализация IPA встроена в правила транслитерации?
 
-Substring normalization applies to recurring IPA sequences inside words.
-Whole-word normalization applies only when the entire IPA word matches.
+Изначально нормализация (замена дифтонгов `eɪ -> ej` и R-гласных `ɝ -> эр`) была отдельным модулем. Но это создавало лишний этап в пайплайне. Перенос этих правил напрямую в DSL `transliteration_rules.py` позволил движку выполнять нормализацию и транслитерацию за один проход, что быстрее и проще.
 
-This separation prevents exceptional short-word fixes from being applied inside longer words.
+### Почему исходные правила — это Python-модули?
 
-### Why are source rules Python modules?
+Потому что Python уже предоставляет структурированный, импортируемый формат данных.
 
-Because Python already provides a structured, importable data format.
+Использование `.py` файлов избавляет от изобретения собственного формата хранения и написания парсера для него. Макросы и правила — это обычные объекты Python, и скрипт сборки может загружать их напрямую.
 
-Using `.py` files avoids inventing a custom storage format and writing a parser for it. Macros and rules are ordinary Python objects, and the build script can load them directly.
+Поддержка IDE и структурная валидация — приятные побочные эффекты.
 
-IDE support and structural validation are useful side effects.
+### Исходные правила vs скомпилированные
 
-### Source rules vs compiled rules
+- **Исходные правила** (`data_src/transliteration_rules.py`) читаемы человеком и могут содержать макросы и группы в скобках.
+- **Скомпилированные правила** (`data/transliteration_rules.pkl`) — это плоский список пар `(L, R)`, скомпилированный один раз во время сборки скриптом `scripts/build_rules.py`.
 
-- **Source rules** (`data_src/transliteration_rules.py`) are human-readable and may contain macros and bracket groups.
-- **Compiled rules** (`data/transliteration_rules.pkl`) are a flat list of `(L, R)` pairs, compiled once at build time by `scripts/build_rules.py`.
+Компиляции в рантайме нет. Рантайм использует заранее скомпилированные `.pkl` файлы.
 
-There is no runtime compilation. The runtime uses precompiled `.pkl` files.
+Если вы изменили исходные правила в dev-окружении, запустите `scripts/build_rules.py`, чтобы обновить скомпилированные данные. При editable-установке обновленные файлы используются сразу.
 
-If you modify source rules in a development checkout, run `scripts/build_rules.py`
-to regenerate the compiled data. With an editable installation, the updated files
-are used directly.
+Пользователи pip не пересобирают правила: они устанавливают версию пакета, которая уже содержит скомпилированные данные.
 
-Pip users do not rebuild rules: they install a package version that already
-contains the compiled data.
+## Проверка
 
-## Testing
-
-Tests live in `tests/` and cover rule compilation, the rule engine,
-hybrid transcription, and `Transcriber` integration.
+Для проверки работоспособности запустите встроенный скрипт `examples/basic_usage.py`.

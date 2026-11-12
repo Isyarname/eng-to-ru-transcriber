@@ -1,46 +1,46 @@
-# Practical English-Russian Transcription
+# Практическая англо-русская транскрипция
 
-[Читать на русском языке](https://github.com/Isyarname/eng-to-ru-transcriber/blob/main/README.ru.md)
+[Read in English](https://github.com/Isyarname/eng-to-ru-transcriber/blob/main/README.md)
 
-A lightweight Python library for quick and deterministic practical transcription of English words using the Russian alphabet.
+Легковесная Python-библиотека для быстрой и предсказуемой практической транскрипции английских слов русским алфавитом.
 
-## Why this exists
+## Зачем это нужно
 
-**This library is built for:**
-- **Transcribing names, usernames, brand names, and specific technical terms** (e.g., *Daenerys*, *MacBook*, *Kubernetes*).
-- **Fast TTS pipelines**, where instant, offline processing without heavy ML models is critical.
+**Библиотека создана для:**
+- **Транскрипции имен, никнеймов, названий брендов и специфичных терминов** (например, *Daenerys*, *MacBook*, *Kubernetes*).
+- **Быстрой подготовки текста для TTS** (синтеза речи), где важна мгновенная работа без загрузки тяжелых моделей.
 
-Modern translation tools are powerful, but they are overkill for simple tasks:
-- **Cloud APIs** (like Google Translate) require an internet connection and have rate limits.
-- **Neural networks** are heavy, slow to initialize, and can produce unpredictable results.
+Современные инструменты перевода мощны, но для простых задач они избыточны:
+- **Облачные API** (вроде Google Translate) требуют интернета и имеют лимиты.
+- **Нейросети** — тяжелые, медленно загружаются и могут выдавать непредсказуемые результаты.
 
-Sometimes you just need to instantly write English names or terms using the Russian alphabet without waiting for models to load. Existing G2P and normalization packages were tested for this task and found lacking. You can read the detailed comparison in [Experiments](https://github.com/Isyarname/eng-to-ru-transcriber/blob/main/docs/EXPERIMENTS.md).
+Иногда нужно просто мгновенно записать английские имена или термины русским алфавитом без ожидания загрузки моделей. Существующие G2P-пакеты и нормализаторы были проверены на этой задаче и показали неудовлетворительный результат. Подробное сравнение читайте в [Экспериментах](https://github.com/Isyarname/eng-to-ru-transcriber/blob/main/docs/EXPERIMENTS.md).
 
-## Limitations
+## Ограничения
 
-- **Context-free:** The library does not perform Part-of-Speech (POS) tagging or syntactic analysis. For homographs with multiple pronunciations (like *read* or *use*), it will use the first dictionary entry.
-- **Not a translator:** It transcribes *sound*, not *meaning*.
+- **Нет учета контекста:** Библиотека не анализирует часть речи и синтаксис. Если слово имеет несколько произношений (омографы вроде *read* или *use*), будет взято первое из словаря.
+- **Не для перевода:** Это не переводчик, а транскриптор. Он передает *звучание*, а не *смысл*.
 
-## Features
+## Особенности
 
-- **Practical transcription:** adapts IPA pronunciation to match Russian orthography rules, rather than just letter-by-letter replacement.
-- **Vowel length indication:** long vowels are marked with an acute accent (e.g., `и́`, `у́`), preserving phonetic accuracy.
-- **Zero dependencies & 100% offline:** no heavy ML models or cloud APIs. Works instantly.
-- **Deterministic:** the same word always yields the exact same result.
-- **Fast and accurate:** Processes ~100,000 words/sec. About 10 times faster than `ru-normalizr` on real text, with superior handling of English slang, names, and abbreviations.
-- **Custom vocabulary:** easily teach the library how to transcribe your specific character names, brands, or terms.
+- **Практическая транскрипция:** адаптация IPA-звучания под правила русской орфографии, а не просто побуквенная замена.
+- **Передача долготы гласных:** долгие гласные обозначаются знаком акута (например, `и́`, `у́`), что помогает сохранить фонетическую точность.
+- **Без зависимостей и 100% офлайн:** никаких тяжелых ML-моделей и облачных API. Работает мгновенно.
+- **Детерминированность:** одно и то же слово всегда дает идентичный результат.
+- **Быстро и точно:** обрабатывает ~100 000 слов/сек. Примерно в 10 раз быстрее `ru-normalizr` на реальном тексте и точнее справляется с английским сленгом, именами и аббревиатурами.
+- **Свой словарь:** легко научите библиотеку транскрибировать имена ваших персонажей, бренды или специфичные термины.
 
-## Installation
+## Установка
 
-Requires Python 3.9 or higher.
+Требуется Python 3.9 или выше.
 
 ```bash
 pip install eng-to-ru-transcriber
 ```
 
-## Usage
+## Использование
 
-### Basic Example
+### Базовый пример
 
 ```python
 from eng_to_ru_transcriber import Transcriber
@@ -50,19 +50,19 @@ print(t.transcribe("Hello, URL!"))
 # → халоу, ю-ар-эл!
 ```
 
-*Abbreviations (like URL) are automatically detected and read letter-by-letter.*
+*Аббревиатуры (например, URL) автоматически распознаются и читаются по буквам.*
 
-### Custom Vocabulary
+### Свой словарь
 
-You can easily override the pronunciation of specific words. The dictionary accepts both ready Cyrillic text and IPA phonetic notation:
+Вы можете легко переопределить произношение конкретных слов. Словарь принимает как готовую кириллицу, так и фонетическую запись IPA:
 
 ```python
 from eng_to_ru_transcriber import Transcriber
 
-# You can mix formats: Cyrillic and IPA
+# Можно смешивать форматы: кириллицу и IPA
 custom_vocabulary = {
-    "python": "пайтон",           # Cyrillic
-    "kubernetes": "ˌkjuːbəˈnɛtɪs" # IPA
+    "python": "пайтон",           # кириллицей
+    "kubernetes": "ˌkjuːbəˈnɛtɪs" # через IPA
 }
 
 t = Transcriber(custom_vocabulary=custom_vocabulary)
@@ -70,19 +70,19 @@ print(t.transcribe("I love Python and Kubernetes"))
 # → ай лав пайтон энд къю́банэтис
 ```
 
-## Development & Testing
+## Разработка и проверка
 
-To check that the library works correctly in your environment, run the built-in example:
+Чтобы убедиться, что библиотека работает корректно, запустите встроенный пример:
 
 ```bash
 pip install -e .
 python examples/basic_usage.py
 ```
 
-## Data Sources
+## Источники данных
 
-English IPA data is derived from [open-dict-data/ipa-dict](https://github.com/open-dict-data/ipa-dict) (MIT License, Copyright © 2016 dohliam).
+Данные IPA для английского языка взяты из [open-dict-data/ipa-dict](https://github.com/open-dict-data/ipa-dict) (лицензия MIT, Copyright © 2016 dohliam).
 
-## License
+## Лицензия
 
 MIT

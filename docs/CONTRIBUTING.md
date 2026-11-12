@@ -1,8 +1,8 @@
-# Contributing Guide
+# Руководство для контрибьюторов
 
-Thank you for your interest in contributing to eng-to-ru-transcriber!
+Спасибо за интерес к развитию eng-to-ru-transcriber!
 
-## 🚀 Development setup
+## 🚀 Настройка окружения
 
 ```bash
 git clone https://github.com/Isyarname/eng-to-ru-transcriber
@@ -10,107 +10,106 @@ cd eng-to-ru-transcriber
 pip install -e ".[dev]"
 ```
 
-The `-e` flag installs the package in editable mode, so changes to Python source files are immediately visible without reinstalling.
+Флаг `-e` устанавливает пакет в редактируемом режиме (editable mode), поэтому изменения в исходных файлах Python вступают в силу сразу без переустановки.
 
-## 🧪 Running tests
+## 🧪 Проверка работы
+
+Вместо классических юнит-тестов мы используем дымовой тест (smoke test) через встроенный пример. Все примеры должны успешно выполняться перед отправкой PR.
 
 ```bash
-python -m pytest tests/ -v
+python examples/basic_usage.py
 ```
 
-All tests must pass before submitting a PR.
+## 📝 Изменение правил
 
-## 📝 Changing rules
+Данные правил во время выполнения компилируются заранее в `.pkl` файлы. Исходные правила хранятся в `data_src/` и не используются напрямую в рантайме.
 
-Runtime rule data is compiled ahead of time into `.pkl` files. Source rules are stored in `data_src/` and are not used directly at runtime.
+Чтобы изменить правила транслитерации или транскрипции:
 
-To change transliteration or transcription rules:
-
-1. Edit the relevant source file under `data_src/`, for example `data_src/transliteration_rules.py`.
-2. Rebuild the compiled rule data:
+1. Отредактируйте соответствующий исходный файл в `data_src/`, например `data_src/transliteration_rules.py`.
+2. Пересоберите скомпилированные данные:
 
 ```bash
 python scripts/build_rules.py
 ```
 
-3. Create a new `Transcriber` instance or restart your process so the updated compiled data is loaded.
+3. Создайте новый экземпляр `Transcriber` или перезапустите процесс, чтобы загрузить обновленные данные.
 
-With an editable installation, reinstalling the package after rebuilding is not required.
+При editable-установке переустанавливать пакет после пересборки не требуется.
 
-4. Run the tests:
+4. Запустите пример для проверки:
 
 ```bash
-python -m pytest
+python examples/basic_usage.py
 ```
 
-Do not edit generated `.pkl` files by hand. If the repository tracks the generated files, commit them together with the source changes.
+Не редактируйте сгенерированные `.pkl` файлы вручную. Если репозиторий отслеживает сгенерированные файлы, коммитьте их вместе с изменениями исходников.
 
-## 📖 Updating the dictionary
+## 📖 Обновление словаря
 
-The source dictionary is stored as a plain text file and compiled into a pickle for faster loading.
+Исходный словарь хранится в виде текстового файла и компилируется в pickle для быстрой загрузки.
 
-1. Edit `data_src/en_dict.txt` using the existing format:
+1. Отредактируйте `data_src/en_dict.txt`, используя существующий формат:
 
 ```text
 word<TAB>IPA_transcription
 ```
 
-2. Regenerate the dictionary data:
+2. Пересоберите данные словаря:
 
 ```bash
 python scripts/convert_dict.py
 ```
 
-3. Create a new `Transcriber` instance or restart your process.
-4. Run the tests:
+3. Создайте новый экземпляр `Transcriber` или перезапустите процесс.
+4. Запустите пример для проверки:
 
 ```bash
-python -m pytest
+python examples/basic_usage.py
 ```
 
 ## 🔀 Git workflow
 
-1. Create a branch for your changes:
+1. Создайте ветку для ваших изменений:
 
 ```bash
 git checkout -b feature/add-th-rule
 ```
 
-2. Make your changes and commit:
+2. Внесите изменения и закоммитьте их:
 
 ```bash
 git add .
 git commit -m "Add θ → с transliteration rule"
 ```
 
-3. Push to your fork:
+3. Отправьте в ваш форк:
 
 ```bash
 git push origin feature/add-th-rule
 ```
 
-4. Open a Pull Request on GitHub.
+4. Откройте Pull Request на GitHub.
 
-## 📋 Pull request checklist
+## 📋 Чеклист перед отправкой PR
 
-Before submitting your PR, make sure:
+Перед отправкой PR убедитесь, что:
 
-- [ ] Tests pass: `python -m pytest`
-- [ ] Code follows the existing style
-- [ ] Compiled data is regenerated if source rules or dictionary data changed
-- [ ] Added tests for new functionality (if applicable)
-- [ ] Updated documentation (if applicable)
-- [ ] PR description explains what changed and why
+- [ ] Встроенный пример работает без ошибок: `python examples/basic_usage.py`
+- [ ] Код соответствует существующему стилю
+- [ ] Скомпилированные данные пересобраны, если менялись исходники правил или словаря
+- [ ] Обновлена документация (если применимо)
+- [ ] Описание PR объясняет, что изменилось и почему
 
-## 🐛 Reporting issues
+## 🐛 Сообщение о проблемах (Issues)
 
-If you find a bug or have a feature request:
+Если вы нашли баг или у вас есть предложение по фиче:
 
-1. Check existing issues to avoid duplicates.
-2. Create a new issue with:
-   - a clear description;
-   - steps to reproduce (for bugs);
-   - expected vs actual behavior;
-   - Python version and OS.
+1. Проверьте существующие issues, чтобы избежать дублирования.
+2. Создайте новый issue с описанием:
+   - понятное описание проблемы;
+   - шаги для воспроизведения (для багов);
+   - ожидаемое и фактическое поведение;
+   - версия Python и ОС.
 
-Thank you for contributing! 🎉
+Спасибо за ваш вклад! 🎉

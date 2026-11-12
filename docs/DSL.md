@@ -1,10 +1,10 @@
-# Transliteration Rules DSL
+# DSL правил транслитерации
 
-This document describes the Domain-Specific Language (DSL) used to define IPA-to-Cyrillic transliteration rules.
+Этот документ описывает Domain-Specific Language (DSL), используемый для определения правил транслитерации IPA в кириллицу.
 
-## 📄 File Structure
+## 📄 Структура файла
 
-Rules are defined in `src/eng_to_ru_transcriber/data/transliteration_rules.py` as two Python variables:
+Правила определяются в файле `data_src/transliteration_rules.py` в виде двух переменных Python:
 
 ```python
 macros = {
@@ -16,11 +16,11 @@ LHS->RHS
 '''
 ```
 
-The file is loaded at runtime via `importlib` — it is treated as **data**, not as executable code.
+Файл загружается во время сборки через `importlib` — он рассматривается как **данные**, а не как исполняемый код.
 
-## 📦 Macros
+## 📦 Макросы
 
-Macros are key-value pairs where the key is a short token used in rules, and the value is the string it expands to:
+Макросы — это пары ключ-значение, где ключ — короткий токен, используемый в правилах, а значение — строка, в которую он разворачивается:
 
 ```python
 _ACCENT = '\u0301'
@@ -34,29 +34,29 @@ macros = {
 }
 ```
 
-The compiler performs simple string replacement for each macro key in both LHS and RHS of every rule. Longer keys are expanded first to avoid partial matches.
+Компилятор выполняет простую замену строк для каждого ключа макроса как в LHS, так и в RHS каждого правила. Более длинные ключи разворачиваются первыми, чтобы избежать частичных совпадений.
 
-If a macro value is a Python `set`, it is automatically converted to a bracket group:
+Если значение макроса — это Python `set`, он автоматически преобразуется в группу скобок:
 
 ```python
 macros = {
-    "VOWELS": {"a", "e", "i", "o", "u"},  # becomes [aeiou]
+    "VOWELS": {"a", "e", "i", "o", "u"},  # станет [aeiou]
 }
 ```
 
-## 📜 Rules Syntax
+## 📜 Синтаксис правил
 
-### Basic rule format
+### Базовый формат правила
 
 ```
 LHS->RHS
 ```
 
-- `LHS` — left-hand side (pattern to match), **no spaces allowed**
-- `->` — separator (spaces around it are ignored)
-- `RHS` — right-hand side (replacement), **no spaces allowed**
+- `LHS` — левая часть (паттерн для поиска), **без пробелов**
+- `->` — разделитель (пробелы вокруг игнорируются)
+- `RHS` — правая часть (замена), **без пробелов**
 
-Examples:
+Примеры:
 ```
 b->б
 k->к
@@ -64,15 +64,15 @@ k->к
 ð->д
 ```
 
-### Multiple rules per line
+### Несколько правил в строке
 
-Multiple rules can be placed on a single line, separated by whitespace:
+Несколько правил можно разместить в одной строке, разделив их пробелом:
 
 ```
 ɟ->gʲ  ç->xʲ  ɲ->ŋʲ  c->kʲ
 ```
 
-This is equivalent to:
+Это эквивалентно:
 ```
 ɟ->gʲ
 ç->xʲ
@@ -80,26 +80,26 @@ This is equivalent to:
 c->kʲ
 ```
 
-### Bracket groups
+### Группы скобок
 
-The DSL supports two kinds of bracket groups, both expanded by the compiler into separate rules:
+DSL поддерживает два вида групп скобок, обе разворачиваются компилятором в отдельные правила:
 
-**Square brackets `[abc]`** — alternatives of single characters:
+**Квадратные скобки `[abc]`** — альтернативы из одного символа:
 ```
 [abc]->[xyz]
 ```
-Expands to:
+Разворачивается в:
 ```
 a->x
 b->y
 c->z
 ```
 
-**Round brackets `(a|b|c)`** — alternatives of any length:
+**Круглые скобки `(a|b|c)`** — альтернативы любой длины:
 ```
 oi(xt|rs|rt|rh|s)->o(xt|rs|rt|rh|s)
 ```
-Expands to:
+Разворачивается в:
 ```
 oixt->oxt
 oirs->ors
@@ -108,15 +108,15 @@ oirh->orh
 ois->os
 ```
 
-### Parallel expansion
+### Параллельное разворачивание
 
-When a rule contains multiple bracket groups, they are expanded independently, producing all possible combinations:
+Когда правило содержит несколько групп скобок, они разворачиваются независимо, создавая все возможные комбинации:
 
 ```
 [ab][cd]->[xy][zw]
 ```
 
-Expands to four rules:
+Разворачивается в четыре правила:
 ```
 ac->xz
 ad->xw
@@ -124,24 +124,24 @@ bc->yz
 bd->yw
 ```
 
-If RHS has fewer alternatives than LHS, RHS is duplicated:
+Если в RHS меньше альтернатив, чем в LHS, RHS дублируется:
 
 ```
 [abc]->y
 ```
 
-Expands to:
+Разворачивается в:
 ```
 a->y
 b->y
 c->y
 ```
 
-**Rule:** the number of alternatives in LHS and RHS must match, or RHS must have exactly one alternative (which is duplicated). Otherwise, an error is raised.
+**Правило:** количество альтернатив в LHS и RHS должно совпадать, либо в RHS должна быть ровно одна альтернатива (которая дублируется). В противном случае возникает ошибка.
 
-### Multi-character rules
+### Многосимвольные правила
 
-Rules can match sequences of characters:
+Правила могут сопоставляться с последовательностями символов:
 
 ```
 ʤ->дж
@@ -152,49 +152,46 @@ Rules can match sequences of characters:
 ʲэ->е
 ```
 
-### Combining macros and bracket groups
+### Комбинирование макросов и групп скобок
 
-Macros and bracket groups can be combined in a single rule:
+Макросы и группы скобок можно комбинировать в одном правиле:
 
 ```
 Cй[аоуэ]->Cъй[аоуэ]
 ```
 
-After macro expansion:
+После раскрытия макросов:
 ```
 [бкдфгхлмнпрствжзнйш]й[аоуэ]->[бкдфгхлмнпрствжзнйш]ъй[аоуэ]
 ```
 
-Then expanded into separate rules for each combination.
+Затем правило разворачивается в отдельные правила для каждой комбинации.
 
-## ⚙️ Rule Processing
+## ⚙️ Обработка правил
 
-### Order of operations
+### Порядок операций
 
-1. **Parse** — split rules by `->`, ignore spaces around separator, extract multiple rules per line
-2. **Expand macros** — replace macro keys with their values (longest keys first)
-3. **Expand brackets** — convert `[abc]` to `(a|b|c)` and generate all combinations
-4. **Add capitalized variants** — duplicate rules with uppercase first letter (if applicable)
+1. **Парсинг** — разделение правил по `->`, игнорирование пробелов вокруг разделителя, извлечение нескольких правил из строки.
+2. **Раскрытие макросов** — замена ключей макросов их значениями (сначала самые длинные ключи).
+3. **Раскрытие скобок** — преобразование `[abc]` в `(a|b|c)` и генерация всех комбинаций.
 
+### Порядок применения правил
 
-### Rule application order
-
-Rules are applied **in the order they appear** in the `rules` string, from left to right and top to bottom. More specific rules should come before general ones:
+Правила применяются **в том порядке, в котором они указаны** в строке `rules`, слева направо и сверху вниз. Более специфичные правила должны идти перед общими:
 
 ```
-ʲа->я     ← specific (palatalization + vowel)
-ʲ->ь      ← general (palatalization alone)
+ʲа->я     ← специфичное (палатализация + гласная)
+ʲ->ь      ← общее (только палатализация)
 ```
 
-## 🔀 Regex Passthrough
+## 🔀 Передача регулярных выражений
 
-The DSL does not escape regex special characters — they pass through to the final pattern as-is. This allows using regex constructs directly when needed:
+DSL не экранирует спецсимволы регулярных выражений — они передаются в итоговый паттерн как есть. Это позволяет напрямую использовать конструкции regex, когда это необходимо:
 
-| Construct      | Meaning                       | Example                               |
-|----------------|-------------------------------|---------------------------------------|
-| `?`            | Optional                      | `ʲ?` — optional palatalization        |
-| `*`, `+`       | Repetition                    | `[rnl]{2}` — exactly two characters   |
-| `^`, `$`       | Anchors                       | `^sʲ->s` — only at word start         |
-| `(?!...)`      | Negative lookahead            | `!ʲ` → `(?!ʲ)`                        |
-| `\|`           | Alternation (inside `(...)`)  | `(xt\|rs\|rt)`                        |
-
+| Конструкция | Значение | Пример |
+|---|---|---|
+| `?` | Опционально | `ʲ?` — опциональная палатализация |
+| `*`, `+` | Повторение | `[rnl]{2}` — ровно два символа |
+| `^`, `$` | Якоря | `^sʲ->s` — только в начале слова |
+| `(?!...)` | Негативный просмотр вперёд | `!ʲ` → `(?!ʲ)` |
+| `\|` | Альтернация (внутри `(...)`) | `(xt\|rs\|rt)` |
