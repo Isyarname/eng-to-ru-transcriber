@@ -3,7 +3,7 @@
 Запуск:
     py scripts/pre_release.py                 # стандартная проверка + очистка + тесты
     py scripts/pre_release.py --rebuild       # + пересобрать .pkl из data_src/
-    py scripts/pre_release.py --no-test       # пропустить тесты
+    py scripts/pre_release.py --no-example    # пропустить проверку примера
     py scripts/pre_release.py --no-clean      # не чистить dist/ и кэш
     py scripts/pre_release.py --no-reinstall  # не переустанавливать пакет
     py scripts/pre_release.py --strict        # предупреждения становятся ошибками
@@ -31,7 +31,7 @@ RULES_MAP = {
     "eng_to_ipa_rules.py": "eng_to_ipa_rules.pkl",
 }
 
-README_FILES = ["README.md", "README.ru.md"]
+README_FILES = ["README.md", "README.en.md"]
 
 
 # ─────────────────────────── Утилиты ───────────────────────────
