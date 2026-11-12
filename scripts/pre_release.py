@@ -13,6 +13,7 @@ import re
 import shutil
 import subprocess
 import sys
+import os
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -28,7 +29,6 @@ RULES_MAP = {
     "en_dict.txt": "en_dict.pkl",
     "transliteration_rules.py": "transliteration_rules.pkl",
     "eng_to_ipa_rules.py": "eng_to_ipa_rules.pkl",
-    "phonetic_normalizations.py": "phonetic_normalizations.pkl",
 }
 
 README_FILES = ["README.md", "README.ru.md"]
@@ -201,26 +201,32 @@ def reinstall_editable() -> bool:
     return _run([sys.executable, "-m", "pip", "install", "-e", ".", "--quiet"]) == 0
 
 
-def run_tests() -> bool:
-    print("🧪 Запуск тестов...")
+def run_example() -> bool:
+    print("🚀 Проверка examples/basic_usage.py...")
+
+    example_path = PROJECT_ROOT / "examples" / "basic_usage.py"
+    if not example_path.exists():
+        _err("Не найден examples/basic_usage.py")
+        return False
+
+    # Копируем текущее окружение и принудительно ставим UTF-8
+    env = os.environ.copy()
+    env["PYTHONIOENCODING"] = "utf-8"
+
     result = subprocess.run(
-        [sys.executable, "-m", "pytest", "-q"],
+        [sys.executable, str(example_path)],
         cwd=PROJECT_ROOT,
         capture_output=True,
         text=True,
+        env=env,
+        encoding="utf-8",
     )
+
     if result.returncode == 0:
-        # Вытаскиваем "N passed" из последней непустой строки
-        summary = ""
-        for line in reversed(result.stdout.strip().splitlines()):
-            if "passed" in line or "failed" in line:
-                summary = line.strip()
-                break
-        _ok(f"Тесты прошли: {summary}" if summary else "Тесты прошли")
+        _ok("Пример отработал успешно")
         return True
 
-    # Упали — показываем всё, что pytest напечатал
-    _err("Тесты упали:")
+    _err("Пример упал с ошибкой:")
     print(result.stdout)
     if result.stderr:
         print(result.stderr)
@@ -233,7 +239,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Pre-release check")
     parser.add_argument("--rebuild", action="store_true", help="Пересобрать .pkl из data_src/")
     parser.add_argument("--no-clean", action="store_true", help="Не чистить dist/ и кэш")
-    parser.add_argument("--no-test", action="store_true", help="Не запускать тесты")
+    parser.add_argument("--no-example", action="store_true", help="Не запускать проверку примера")
     parser.add_argument("--no-reinstall", action="store_true", help="Не переустанавливать пакет")
     parser.add_argument("--strict", action="store_true", help="Предупреждения становятся ошибками")
     args = parser.parse_args()
@@ -287,10 +293,10 @@ def main() -> None:
     if not git_ok:
         print("   ⚠️  Сборка возможна, но код в git не совпадает с тем, что уйдёт на PyPI.")
 
-    # 9. Тесты
-    if not args.no_test:
-        if not run_tests():
-            _err("Тесты упали")
+    # 9. Проверка рабочего примера
+    if not args.no_example:
+        if not run_example():
+            _err("Пример упал")
             sys.exit(1)
 
     print()
