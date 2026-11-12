@@ -26,7 +26,7 @@ def convert():
             parts = line.split("\t", 1)
             if len(parts) == 2:
                 word = parts[0].strip()
-                ipa_val = parts[1].strip().strip("/").split(",")[0].strip()
+                ipa_val = parts[1].replace("/", "").split(",")[0].strip()
                 if word not in ipa_dict:
                     ipa_dict[word] = ipa_val
 
