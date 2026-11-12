@@ -14,7 +14,7 @@ Modern translation tools are powerful, but they are overkill for simple tasks:
 - **Cloud APIs** (like Google Translate) require an internet connection and have rate limits.
 - **Neural networks** are heavy, slow to initialize, and can produce unpredictable results.
 
-Sometimes you just need to instantly write English names or terms using the Russian alphabet without waiting for models to load.
+Sometimes you just need to instantly write English names or terms using the Russian alphabet without waiting for models to load. Existing G2P and normalization packages were tested for this task and found lacking. You can read the detailed comparison in [Experiments](https://github.com/Isyarname/eng-to-ru-transcriber/blob/main/docs/EXPERIMENTS.md).
 
 ## Limitations
 
