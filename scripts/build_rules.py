@@ -32,29 +32,6 @@ def compile_dsl_rules(source_file: Path, output_file: Path) -> None:
     print(f"✅ {source_file.name} → {output_file.name} ({len(compiled)} правил)")
 
 
-def compile_normalizations(source_file: Path, output_file: Path) -> None:
-    if not source_file.exists():
-        print(f"❌ Исходник не найден: {source_file}")
-        return
-
-    spec = spec_from_file_location("norm_module", str(source_file))
-    module = module_from_spec(spec)
-    spec.loader.exec_module(module)
-
-    substring_norms = getattr(module, "SUBSTRING_NORMALIZATIONS", [])
-    word_norms = getattr(module, "WORD_NORMALIZATIONS", {})
-
-    data = (substring_norms, word_norms)
-
-    with open(output_file, "wb") as f:
-        pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
-
-    print(
-        f"✅ {source_file.name} → {output_file.name} "
-        f"({len(substring_norms)} подстрочных, {len(word_norms)} словарных)"
-    )
-
-
 if __name__ == "__main__":
     DATA_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -65,8 +42,4 @@ if __name__ == "__main__":
     compile_dsl_rules(
         DATA_SRC / "eng_to_ipa_rules.py",
         DATA_DIR / "eng_to_ipa_rules.pkl",
-    )
-    compile_normalizations(
-        DATA_SRC / "phonetic_normalizations.py",
-        DATA_DIR / "phonetic_normalizations.pkl",
     )

@@ -11,7 +11,6 @@ _PACKAGE_DATA = resources.files("eng_to_ru_transcriber.data")
 _DEFAULT_TRANSLIT_RULES_PATH = Path(str(_PACKAGE_DATA.joinpath("transliteration_rules.pkl")))
 _DEFAULT_ENG_TO_IPA_RULES_PATH = Path(str(_PACKAGE_DATA.joinpath("eng_to_ipa_rules.pkl")))
 _DEFAULT_EN_DICT_PATH = Path(str(_PACKAGE_DATA.joinpath("en_dict.pkl")))
-_DEFAULT_NORMALIZATIONS_PATH = Path(str(_PACKAGE_DATA.joinpath("phonetic_normalizations.pkl")))
 
 
 class Transcriber:
@@ -26,7 +25,6 @@ class Transcriber:
         translit_rules_path: Path | None = None,
         eng_to_ipa_rules_path: Path | None = None,
         en_dict_path: Path | None = None,
-        normalizations_path: Path | None = None,
         custom_vocabulary: dict[str, str] | None = None,
     ) -> None:
         """
@@ -41,7 +39,6 @@ class Transcriber:
         self._translit_rules_path = translit_rules_path or _DEFAULT_TRANSLIT_RULES_PATH
         self._eng_to_ipa_rules_path = eng_to_ipa_rules_path or _DEFAULT_ENG_TO_IPA_RULES_PATH
         self._en_dict_path = en_dict_path or _DEFAULT_EN_DICT_PATH
-        self._normalizations_path = normalizations_path or _DEFAULT_NORMALIZATIONS_PATH
 
         # --- Пользовательский словарь ---
         self._custom_vocabulary = dict(custom_vocabulary) if custom_vocabulary else {}
@@ -50,7 +47,6 @@ class Transcriber:
         self._transliteration_rules = self._load_pickle(self._translit_rules_path)
         self._eng_to_ipa_rules = self._load_pickle(self._eng_to_ipa_rules_path)
         self._en_dict = self._load_pickle(self._en_dict_path)
-        self._substring_norms, self._word_norms = self._load_pickle(self._normalizations_path)
 
         # --- Объединённый словарь (собирается один раз) ---
         if self._custom_vocabulary:
@@ -72,9 +68,8 @@ class Transcriber:
             self._merged_vocabulary,
             self._long_keys,
             self._eng_to_ipa_rules,
-            self._substring_norms,
-            self._word_norms,
         )
+        #print(ipa_text)                                                             ##############################
         return ipa_to_ru.convert(ipa_text, self._transliteration_rules)
 
     # ─────────────────────────── Доступ к ресурсам ───────────────────────

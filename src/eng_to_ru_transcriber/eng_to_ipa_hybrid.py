@@ -187,25 +187,12 @@ def _bulk_transcribe(
 
 # ─────────────────────────── Шаг 4: Сборка результата ───────────────────────────
 
-def _normalize_ipa_word(
-    ipa_word: str,
-    substring_norms: list[tuple[str, str]],
-    word_norms: dict[str, str],
-) -> str:
-    if ipa_word in word_norms:
-        return word_norms[ipa_word]
-    for old, new in substring_norms:
-        ipa_word = ipa_word.replace(old, new)
-    return ipa_word
-
 
 def _build_final_tokens(
     tokens: list[str],
     word_segments: dict[str, list[tuple[str, bool]]],
     custom_exceptions: dict[str, str],
-    english_mapping: dict[str, str],
-    substring_norms: list[tuple[str, str]],
-    word_norms: dict[str, str],
+    english_mapping: dict[str, str]
 ) -> list[str]:
     """Собирает финальные токены: слова → IPA, остальное как есть."""
     final_tokens: list[str] = []
@@ -226,7 +213,7 @@ def _build_final_tokens(
                 ipa_parts.append(english_mapping.get(seg_text, seg_text))
 
         ipa_word = "".join(ipa_parts)
-        final_tokens.append(_normalize_ipa_word(ipa_word, substring_norms, word_norms))
+        final_tokens.append(ipa_word)
 
     return final_tokens
 
@@ -237,9 +224,7 @@ def transcribe(
     text: str,
     custom_exceptions: dict[str, str],
     long_keys: frozenset[str] | None,
-    transcription_rules: list[tuple[str, str]],
-    substring_norms: list[tuple[str, str]],
-    word_norms: dict[str, str],
+    transcription_rules: list[tuple[str, str]]
 ) -> str:
     if not text:
         return ""
@@ -265,7 +250,7 @@ def transcribe(
     # Шаг 4: Собираем результат
     final_tokens = _build_final_tokens(
         tokens, word_segments, custom_exceptions,
-        english_mapping, substring_norms, word_norms,
+        english_mapping
     )
 
     return "".join(final_tokens).strip()

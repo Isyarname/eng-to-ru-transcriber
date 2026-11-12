@@ -7,10 +7,10 @@
   - epitran            → IPA (нативно)
 
 Запуск:
-    py benchmark_ipa_engines.py
-    py benchmark_ipa_engines.py --text examples/text.txt
-    py benchmark_ipa_engines.py --words skibidi rizz delulu doomscrolling
-    py benchmark_ipa_engines.py --rounds 10
+    py scripts/benchmark_ipa_engines.py
+    py scripts/benchmark_ipa_engines.py --text examples/text.txt
+    py scripts/benchmark_ipa_engines.py --words skibidi rizz delulu doomscrolling
+    py scripts/benchmark_ipa_engines.py --rounds 10
 """
 import argparse
 import re
@@ -96,13 +96,13 @@ def init_our_hybrid():
     t = Transcriber()
 
     def fn(word: str) -> str:
+        # Убраны _substring_norms и _word_norms, так как нормализация
+        # теперь происходит в правилах транслитерации.
         return hybrid_transcribe(
             word,
             t._merged_vocabulary,
             t._long_keys,
             t._eng_to_ipa_rules,
-            t._substring_norms,
-            t._word_norms,
         )
 
     return fn
@@ -127,7 +127,6 @@ def init_g2p_en():
 
     def fn(word: str) -> str:
         phones = g2p(word)
-        # g2p возвращает список строк вида ["HH", "AH0", "V"]
         return arpabet_to_ipa(" ".join(phones))
 
     return fn
