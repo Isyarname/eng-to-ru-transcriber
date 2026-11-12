@@ -68,25 +68,27 @@ rule_engine.py
 
 ```text
 eng-to-ru-transcriber/
-├── data_src/                   # Исходники правил и словаря (не поставляются)
-├── docs/                       # Документация
-├── examples/                   # Примеры использования
-├── scripts/                    # Инструменты сборки и релиза (не поставляются)
-│   ├── build_rules.py          # Компилирует data_src/*.py → data/*.pkl
-│   ├── convert_dict.py         # Компилирует data_src/en_dict.txt → data/en_dict.pkl
+├── data_src/                   # Source rules & dictionary (not shipped)
+├── docs/                       # Documentation
+├── examples/                   # Usage examples
+├── scripts/                    # Build & release tools (not shipped)
+│   ├── build_rules.py          # Compiles data_src/*.py → data/*.pkl
+│   ├── convert_dict.py         # Compiles data_src/en_dict.txt → data/en_dict.pkl
 │   └── ...
-├── src/eng_to_ru_transcriber/  # Библиотека (то, что попадает на PyPI)
-│   ├── data/*.pkl              # Скомпилированные данные для рантайма
-│   ├── __init__.py             # Публичный API
-│   ├── transcriber.py          # Оркестратор (точка входа)
-│   ├── eng_to_ipa_hybrid.py    # EN → IPA (словарь + правила)
-│   ├── rule_based_ipa.py       # Применяет правила EN → IPA
-│   ├── ipa_to_ru.py            # Применяет правила IPA → Кириллица
-│   └── rule_engine.py          # Общий исполнитель правил (regex/литералы)
+├── src/eng_to_ru_transcriber/  # The library (this is what ships to PyPI)
+│   ├── data/*.pkl              # Compiled runtime data
+│   ├── __init__.py             # Public API
+│   ├── transcriber.py          # Orchestrator (entry point)
+│   ├── eng_to_ipa_hybrid.py    # EN → IPA (dictionary + rules)
+│   ├── rule_based_ipa.py       # Applies EN → IPA rules
+│   ├── ipa_to_ru.py            # Applies IPA → Cyrillic rules
+│   └── rule_engine.py          # Shared regex/literal rule executor
 ├── .gitignore
 ├── LICENSE
+├── README.en.md
 ├── README.md
-└── pyproject.toml              # Метаданные, конфигурация сборки
+├── THIRD_PARTY_LICENSES.md
+└── pyproject.toml              # Metadata, build config
 ```
 
 ### Что где лежит
@@ -130,10 +132,6 @@ eng-to-ru-transcriber/
 ### Почему src-layout?
 
 Это защищает от случайного импорта локальной папки вместо установленной версии. Соблюдается принцип «тестируй то, что поставляешь».
-
-### Почему нормализация IPA встроена в правила транслитерации?
-
-Изначально нормализация (замена дифтонгов `eɪ -> ej` и R-гласных `ɝ -> эр`) была отдельным модулем. Но это создавало лишний этап в пайплайне. Перенос этих правил напрямую в DSL `transliteration_rules.py` позволил движку выполнять нормализацию и транслитерацию за один проход, что быстрее и проще.
 
 ### Почему исходные правила — это Python-модули?
 
