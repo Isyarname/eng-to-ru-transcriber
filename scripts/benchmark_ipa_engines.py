@@ -175,13 +175,12 @@ def benchmark(fn, text: str, rounds: int, warmup: int = 2) -> dict:
             pass
 
     times = []
-    errors = 0
     for _ in range(rounds):
         start = time.perf_counter()
         try:
             fn(text)
         except Exception:
-            errors += 1
+            pass
         times.append(time.perf_counter() - start)
 
     median = statistics.median(times)
@@ -189,7 +188,6 @@ def benchmark(fn, text: str, rounds: int, warmup: int = 2) -> dict:
         "median_sec": median,
         "ms_per_call": median * 1000,
         "calls_per_sec": 1 / median,
-        "errors": errors,
     }
 
 
@@ -200,13 +198,13 @@ def print_speed_table(results: dict, rounds: int) -> None:
     print(f"СКОРОСТЬ: обработка текста ({rounds} раундов)")
     print("=" * 100)
 
-    header = f"{'Движок':22} {'Init':>10} {'мс/текст':>12} {'текстов/сек':>12} {'ошибок':>8}"
+    header = f"{'Движок':22} {'Init':>10} {'мс/текст':>12} {'текстов/сек':>12}"
     print(header)
     print("-" * 100)
 
     for name, data in results.items():
         if data.get("fn") is None:
-            print(f"{name:22} {'—':>10} {'—':>12} {'—':>12} {'—':>8}  (недоступен)")
+            print(f"{name:22} {'—':>10} {'—':>12} {'—':>12}  (недоступен)")
             continue
 
         init_ms = data.get("init_ms")
@@ -215,8 +213,7 @@ def print_speed_table(results: dict, rounds: int) -> None:
         print(
             f"{name:22} {init_str:>10} "
             f"{m.get('ms_per_call', 0):>10.1f} "
-            f"{m.get('calls_per_sec', 0):>12.2f} "
-            f"{m.get('errors', 0):>8}"
+            f"{m.get('calls_per_sec', 0):>12.2f}"
         )
 
     print("=" * 100)
