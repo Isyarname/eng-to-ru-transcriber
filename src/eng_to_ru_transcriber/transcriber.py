@@ -7,10 +7,10 @@ from . import eng_to_ipa_hybrid, ipa_to_ru
 
 _PACKAGE_DATA = resources.files("eng_to_ru_transcriber.data")
 
-# Пути по умолчанию к скомпилированным данным внутри пакета
-_DEFAULT_TRANSLIT_RULES_PATH = Path(str(_PACKAGE_DATA.joinpath("transliteration_rules.pkl")))
-_DEFAULT_ENG_TO_IPA_RULES_PATH = Path(str(_PACKAGE_DATA.joinpath("eng_to_ipa_rules.pkl")))
-_DEFAULT_EN_DICT_PATH = Path(str(_PACKAGE_DATA.joinpath("en_dict.pkl")))
+# Пути к скомпилированным данным внутри пакета
+_TRANSLIT_RULES_PATH = Path(str(_PACKAGE_DATA.joinpath("transliteration_rules.pkl")))
+_ENG_TO_IPA_RULES_PATH = Path(str(_PACKAGE_DATA.joinpath("eng_to_ipa_rules.pkl")))
+_EN_DICT_PATH = Path(str(_PACKAGE_DATA.joinpath("en_dict.pkl")))
 
 
 class Transcriber:
@@ -22,31 +22,20 @@ class Transcriber:
 
     def __init__(
         self,
-        translit_rules_path: Path | None = None,
-        eng_to_ipa_rules_path: Path | None = None,
-        en_dict_path: Path | None = None,
         custom_vocabulary: dict[str, str] | None = None,
     ) -> None:
         """
         Args:
-            translit_rules_path: Путь к скомпилированным правилам IPA → RU.
-            eng_to_ipa_rules_path: Путь к скомпилированным правилам EN → IPA.
-            en_dict_path: Путь к словарю исключений.
-            normalizations_path: Путь к фонетическим нормализациям.
             custom_vocabulary: Пользовательский словарь (дополняет встроенный).
         """
-        # --- Пути к файлам ---
-        self._translit_rules_path = translit_rules_path or _DEFAULT_TRANSLIT_RULES_PATH
-        self._eng_to_ipa_rules_path = eng_to_ipa_rules_path or _DEFAULT_ENG_TO_IPA_RULES_PATH
-        self._en_dict_path = en_dict_path or _DEFAULT_EN_DICT_PATH
 
         # --- Пользовательский словарь ---
         self._custom_vocabulary = dict(custom_vocabulary) if custom_vocabulary else {}
 
         # --- Загрузка ресурсов ---
-        self._transliteration_rules = self._load_pickle(self._translit_rules_path)
-        self._eng_to_ipa_rules = self._load_pickle(self._eng_to_ipa_rules_path)
-        self._en_dict = self._load_pickle(self._en_dict_path)
+        self._transliteration_rules = self._load_pickle(_TRANSLIT_RULES_PATH)
+        self._eng_to_ipa_rules = self._load_pickle(_ENG_TO_IPA_RULES_PATH)
+        self._en_dict = self._load_pickle(_EN_DICT_PATH)
 
         # --- Объединённый словарь (собирается один раз) ---
         if self._custom_vocabulary:
