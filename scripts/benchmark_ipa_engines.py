@@ -152,6 +152,35 @@ def init_epitran():
     return fn
 
 
+def init_espyak():
+    """Espyak: чистый Python порт espeak-ng. Возвращает IPA."""
+    from espyak import G2P
+
+    # 'en' для английского. Если захочешь британский, можно 'en-gb'
+    g2p = G2P("en")
+
+    def fn(text: str) -> str:
+        # Espyak возвращает список фонем для каждого слова
+        # Соединяем их в строку
+        result = g2p.phonemize(text)
+        # В зависимости от версии espyak, результат может быть списком или строкой.
+        if isinstance(result, list):
+            return " ".join(result)
+        return result
+
+    return fn
+
+def init_kokorog2p():
+    """KokoroG2P: мультиязычный G2P. Возвращает МФА."""
+    from kokorog2p import phonemize
+
+    def fn(text: str) -> str:
+        # Используем английский (США).
+        # Если захочешь британский, поменяй на "en-gb".
+        return phonemize(text, language="en-us")
+
+    return fn
+
 # ─────────────────────────── Замеры ───────────────────────────
 
 def measure_init(factory, name: str) -> tuple[float | None, object | None]:
@@ -279,6 +308,8 @@ def main() -> None:
         ("eng_to_ipa", init_eng_to_ipa),
         ("g2p_en", init_g2p_en),
         ("gruut", init_gruut),
+        ("espyak", init_espyak),
+        ("kokorog2p", init_kokorog2p),
         ("epitran", init_epitran),
     ]:
         init_ms, fn = measure_init(factory, name)
