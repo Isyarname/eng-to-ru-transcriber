@@ -29,6 +29,11 @@ _SUFFIXES = sorted({
 
 MAX_DICT_WORD_LEN = 8
 
+# Минимальная длина словарного сегмента, оканчивающего границу суффикса.
+# Меньше — значит граница суффикса разрезала словарное слово
+# (micro|dos|ing вместо micro|dosing), и суффикс отрезать нельзя.
+_MIN_PREFIX_WORD_LEN = 4
+
 
 # ─────────────────────────── Токенизация ───────────────────────────
 
@@ -61,12 +66,37 @@ def _find_suffix(word_lower: str) -> tuple[int, str] | None:
     return None
 
 
+def _ends_with_dict_word(
+    segments: list[tuple[str, bool]],
+    min_len: int = _MIN_PREFIX_WORD_LEN,
+) -> bool:
+    """True, если разбиение оканчивается словарным словом длиной >= min_len.
+
+    Это признак того, что граница суффикса совпала с реальной границей
+    слова: ghost|ing, scroll|ing, docker|izer. Если последний сегмент —
+    правила или короткий обрубок (dos в micro|dos|ing), граница суффикса
+    разрезала словарное слово, и суффикс отрезать нельзя.
+    """
+    if not segments:
+        return False
+    last_text, is_dict = segments[-1]
+    return is_dict and len(last_text) >= min_len
+
+
 def _split_word_from_end(
     word: str,
     word_lower: str,
     boundary: int,
     long_keys: frozenset[str],
 ) -> list[tuple[str, bool]]:
+    """Ищет словарные слова с конца слова (композиты).
+
+    Английские композиты устроены как [модификатор][голова]:
+    binge|watch, side|hustle, doom|scroll. Поиск с конца сначала
+    находит голову (watch, hustle, scroll) — целое словарное слово, —
+    и только потом модификатор. При поиске с начала движок хватал бы
+    первый попавшийся префикс (dooms, overt), не проверяя голову.
+    """
     if not long_keys:
         return [(word[:boundary], False)]
 
@@ -139,14 +169,26 @@ def _build_word_segments(
             word_segments[word_lower] = [(token, True)]
             continue
 
-        # Разбиваем по суффиксам
+        # Отрезаем продуктивный суффикс только если перед ним остаётся
+        # настоящее словарное слово. Иначе граница суффикса разрезает
+        # словарное слово (microdosing → micro|dos|ing вместо micro|dosing),
+        # и слово надо разбирать целиком.
         suffix_result = _find_suffix(word_lower)
         if suffix_result:
             boundary, suffix = suffix_result
-            segments = list(_split_word_cached(token, word_lower, boundary, long_keys))
-            segments.append((suffix, False))
+            prefix_segments = list(
+                _split_word_cached(token, word_lower, boundary, long_keys)
+            )
+            if _ends_with_dict_word(prefix_segments):
+                segments = prefix_segments + [(suffix, False)]
+            else:
+                segments = list(
+                    _split_word_cached(token, word_lower, len(word_lower), long_keys)
+                )
         else:
-            segments = list(_split_word_cached(token, word_lower, len(word_lower), long_keys))
+            segments = list(
+                _split_word_cached(token, word_lower, len(word_lower), long_keys)
+            )
 
         word_segments[word_lower] = segments
 
@@ -189,7 +231,6 @@ def _bulk_transcribe(
 
 
 # ─────────────────────────── Шаг 4: Сборка результата ───────────────────────────
-
 
 def _build_final_tokens(
     tokens: list[str],
@@ -241,16 +282,9 @@ def transcribe(
     if long_keys is None:
         long_keys = frozenset(k for k in custom_exceptions if len(k) >= 4)
 
-    # Шаг 1: Разбиваем токены на сегменты
     word_segments = _build_word_segments(tokens, custom_exceptions, long_keys)
-
-    # Шаг 2: Собираем неизвестные слова
     unknown_words = _collect_unknown_words(word_segments)
-
-    # Шаг 3: Транскрибируем неизвестные слова
     english_mapping = _bulk_transcribe(unknown_words, transcription_rules)
-
-    # Шаг 4: Собираем результат
     final_tokens = _build_final_tokens(
         tokens, word_segments, custom_exceptions,
         english_mapping
