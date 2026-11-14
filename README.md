@@ -54,21 +54,25 @@ print(t.transcribe("Hello, URL!"))
 
 ### Свой словарь
 
-Вы можете легко переопределить произношение конкретных слов. Словарь принимает как готовую кириллицу, так и фонетическую запись IPA:
+Вы можете легко переопределить произношение конкретных слов. Это особенно полезно для имен, брендов и технических терминов, которых нет во встроенном словаре.
 
 ```python
 from eng_to_ru_transcriber import Transcriber
 
-# Можно смешивать форматы: кириллицу и IPA
-custom_vocabulary = {
-    "python": "пайтон",           # кириллицей
-    "kubernetes": "ˌkjuːbəˈnɛtɪs" # через IPA
-}
+text = "The dockerizer is dockerizing the docker image."
 
-t = Transcriber(custom_vocabulary=custom_vocabulary)
-print(t.transcribe("I love Python and Kubernetes"))
-# → ай лав пайтон энд къю́банэтис
+# Без словаря
+t1 = Transcriber()
+print(t1.transcribe(text))
+# → дэ дакэрайзэ́ из дакэрайзинг дэ дакэр имэдж.
+
+# Со словарём: учим библиотеку новому корню "docker"
+t2 = Transcriber(custom_vocabulary={"docker": "докер"})
+print(t2.transcribe(text))
+# → дэ докерайзэ́ из докерайзинг дэ докер имэдж.
 ```
+
+Слов `dockerizer` и `dockerizing` нет во встроенном словаре. Однако движок автоматически разбивает их на корень `docker` и суффиксы (`izer`, `izing`), применяя ваше кастомное произношение к корню, а правила транскрипции — к окончаниям.
 
 ## Разработка и проверка
 

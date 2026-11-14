@@ -54,21 +54,25 @@ print(t.transcribe("Hello, URL!"))
 
 ### Custom Vocabulary
 
-You can easily override the pronunciation of specific words. The dictionary accepts both ready Cyrillic text and IPA phonetic notation:
+You can easily override the pronunciation of specific words. This is especially useful for names, brands, and technical terms that are not in the built-in dictionary.
 
 ```python
 from eng_to_ru_transcriber import Transcriber
 
-# You can mix formats: Cyrillic and IPA
-custom_vocabulary = {
-    "python": "пайтон",           # Cyrillic
-    "kubernetes": "ˌkjuːbəˈnɛtɪs" # IPA
-}
+text = "The dockerizer is dockerizing the docker image."
 
-t = Transcriber(custom_vocabulary=custom_vocabulary)
-print(t.transcribe("I love Python and Kubernetes"))
-# → ай лав пайтон энд къю́банэтис
+# Without vocabulary
+t1 = Transcriber()
+print(t1.transcribe(text))
+# → дэ дакэрайзэ́ из дакэрайзинг дэ дакэр имэдж.
+
+# With vocabulary: teach the library a new root "docker"
+t2 = Transcriber(custom_vocabulary={"docker": "докер"})
+print(t2.transcribe(text))
+# → дэ докерайзэ́ из докерайзинг дэ докер имэдж.
 ```
+
+The words `dockerizer` and `dockerizing` are not in the built-in dictionary. However, the engine automatically splits them into the root `docker` and suffixes (`izer`, `izing`), applying your custom pronunciation to the root and transcription rules to the endings.
 
 ## Development & Testing
 
