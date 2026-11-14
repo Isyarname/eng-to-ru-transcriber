@@ -55,7 +55,6 @@ alm -> ɑːm
 old -> oʊld
 ind -> ajnd
 a[uw] -> ɔː
-wa -> wɒ
 ea[C] -> iː[C]
 oa[C] -> oʊ[C]
 ai[C] -> ej[C]
@@ -65,12 +64,12 @@ ook -> ʊk
 (ee|ie) -> iː
 
 
-[aio][C]e$ -> (ej|aj|oʊ)[C]$
+[aio][C]e$ -> (ej|aj|oʊ)[C]
 [aio][C][V] -> (ej|aj|oʊ)[C][V]
 [aio][C][V'] -> (ej|aj|oʊ)[C][V']
 u[C]e -> juː[C]e
 [aeiou][C]![V] -> [æeɪɒʌ][C]
-[vs]e[sd]?$ -> [vs][sd]?$
+[vs]e[sd]?$ -> [vs][sd]?
 y -> i
 e[wu] -> juː
 n[gk] -> ŋ[gk]
