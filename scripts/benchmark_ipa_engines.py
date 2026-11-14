@@ -11,6 +11,7 @@ import argparse
 import re
 import statistics
 import time
+import timeit
 import warnings
 from pathlib import Path
 
@@ -195,29 +196,22 @@ def measure_init(factory, name: str) -> tuple[float | None, object | None]:
         return None, None
 
 
-def benchmark(fn, text: str, rounds: int, warmup: int = 2) -> dict:
-    """Замеряет скорость на тексте. Возвращает метрики."""
-    for _ in range(warmup):
-        try:
-            fn(text)
-        except Exception:
-            pass
-
-    times = []
-    for _ in range(rounds):
-        start = time.perf_counter()
-        try:
-            fn(text)
-        except Exception:
-            pass
-        times.append(time.perf_counter() - start)
-
-    median = statistics.median(times)
-    return {
-        "median_sec": median,
-        "ms_per_call": median * 1000,
-        "calls_per_sec": 1 / median,
-    }
+def benchmark(fn, text: str, rounds: int = 5) -> dict | None:
+    """Замеряет скорость с помощью timeit (честно, с GC)."""
+    try:
+        timer = timeit.Timer(lambda: fn(text))
+        number, _ = timer.autorange()
+        results = timer.repeat(repeat=rounds, number=number)
+        times_per_call = [t / number for t in results]
+        median = statistics.median(times_per_call)
+        return {
+            "median_sec": median,
+            "ms_per_call": median * 1000,
+            "calls_per_sec": 1 / median,
+        }
+    except Exception as e:
+        print(f"    ❌ Ошибка при замере: {type(e).__name__}")
+        return None
 
 
 # ─────────────────────────── Вывод ───────────────────────────
@@ -233,7 +227,11 @@ def print_speed_table(results: dict, rounds: int) -> None:
 
     for name, data in results.items():
         if data.get("fn") is None:
-            print(f"{name:22} {'—':>10} {'—':>12} {'—':>12}  (недоступен)")
+            print(f"{name:22} {'—':>10} {'—':>12} {'—':>12}  (не инициализирован)")
+            continue
+
+        if data.get("metrics") is None:
+            print(f"{name:22} {'—':>10} {'—':>12} {'—':>12}  (ошибка при замере)")
             continue
 
         init_ms = data.get("init_ms")
