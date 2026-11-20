@@ -4,14 +4,28 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "eng-to-ru-transcriber"
-version = "0.4.1"
+version = "0.4.2"
 description = "automatic english-to-cyrillic text transcriber"
 readme = "README.md"
 requires-python = ">=3.9"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "kodovy-pesets" }]
-keywords = ["transcription", "transliteration", "english", "russian"]
+keywords = [
+    "transcription",
+    "transliteration",
+    "english",
+    "russian",
+    "tts",
+    "text-to-speech",
+    "nlp",
+    "text-processing",
+    "text-normalization",
+    "g2p",
+    "ipa",
+    "cyrillic",
+]
+
 classifiers = [
     "Development Status :: 4 - Beta",
     "Programming Language :: Python :: 3",
@@ -43,6 +57,6 @@ Issues = "https://github.com/Isyarname/eng-to-ru-transcriber/issues"
 [tool.setuptools.packages.find]
 where = ["src"]
 
-# Включаем текстовые ресурсы (словари, DSL-правила, нормализации) в wheel
+# Включаем текстовые ресурсы (словари, DSL-правила) в wheel
 [tool.setuptools.package-data]
 "eng_to_ru_transcriber" = ["data/*.pkl"]
