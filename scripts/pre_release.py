@@ -26,9 +26,7 @@ DIST_DIR = PROJECT_ROOT / "dist"
 
 # Источник в data_src/ → артефакт в src/.../data/
 RULES_MAP = {
-    "en_dict.txt": "en_dict.pkl",
     "ipa_to_ru_adaptation.py": "ipa_to_ru_adaptation.pkl",
-    "eng_to_ipa_rules.py": "eng_to_ipa_rules.pkl",
 }
 
 README_FILES = ["README.md", "README.en.md"]
@@ -164,11 +162,18 @@ def check_git_clean() -> bool:
 # ─────────────────────────── Действия ───────────────────────────
 
 def clean_dist() -> None:
-    if DIST_DIR.exists():
-        shutil.rmtree(DIST_DIR)
-        _ok("Удалено: dist/")
+    targets = [DIST_DIR, PROJECT_ROOT / "build", *PROJECT_ROOT.rglob("*.egg-info")]
+    removed = []
+
+    for path in targets:
+        if path.exists():
+            shutil.rmtree(path)
+            removed.append(path.relative_to(PROJECT_ROOT).as_posix())
+
+    if removed:
+        _ok(f"Удалено: {', '.join(removed)}")
     else:
-        _ok("dist/ не существовал")
+        _ok("Артефакты сборки не найдены")
 
 
 def clean_cache() -> None:
@@ -187,7 +192,7 @@ def clean_cache() -> None:
 
 def rebuild_rules() -> bool:
     print("🔨 Пересборка .pkl из data_src/...")
-    for script in ["build_rules.py", "convert_dict.py"]:
+    for script in ["build_rules.py"]:
         print(f"   → scripts/{script}")
         if _run([sys.executable, f"scripts/{script}"]) != 0:
             _err(f"{script} упал")
