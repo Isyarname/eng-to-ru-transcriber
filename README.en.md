@@ -9,7 +9,7 @@ A lightweight Python library for quick and deterministic practical transcription
 Built for instant Cyrillic transcription of English names, usernames, brands, and technical terms (including fast text preprocessing for TTS pipelines):
 
 - **Practical transcription:** adapts pronunciation to Russian orthography rules rather than doing naive letter-by-letter transliteration.
-- **100% offline & lightweight:** unlike cloud APIs or neural models, requires no internet, GPU, or slow model loading — its only dependency (`crispy-ipa`) is pure Python.
+- **100% offline & lightweight:** unlike cloud APIs or neural models, requires no internet, GPU, or slow model loading — its only dependency ([`crispy-ipa`](https://github.com/Isyarname/crispy-ipa)) is pure Python.
 - **Fast:** about 10x faster than `ru-normalizr`.
 - **Deterministic:** the same word always yields the exact same result.
 - **Universal custom vocabulary:** override pronunciations for specific names or roots using either Cyrillic or IPA symbols.
@@ -61,7 +61,7 @@ print(t2.transcribe(text))
 # → дэ докерайзэр из докерайзинг дэ докер имэдж.
 ```
 
-The words `dockerizer` and `dockerizing` are not in the built-in dictionary. However, the `crispy-ipa` engine automatically splits them into the root `docker` and suffixes (`izer`, `izing`), applying your custom pronunciation to the root and transcription rules to the endings.
+The words `dockerizer` and `dockerizing` are not in the built-in dictionary. However, the [`crispy-ipa`](https://github.com/Isyarname/crispy-ipa) engine automatically splits them into the root `docker` and suffixes (`izer`, `izing`), applying your custom pronunciation to the root and transcription rules to the endings.
 
 ## Development & Testing
 
@@ -74,7 +74,7 @@ python examples/basic_usage.py
 
 ## Data Sources
 
-Intermediate IPA transcription is powered by [crispy-ipa](https://pypi.org/project/crispy-ipa), which uses [open-dict-data/ipa-dict](https://github.com/open-dict-data/ipa-dict) (MIT License).
+Intermediate IPA transcription is powered by [crispy-ipa](https://github.com/Isyarname/crispy-ipa), which uses [open-dict-data/ipa-dict](https://github.com/open-dict-data/ipa-dict) (MIT License).
 
 ## License
 
