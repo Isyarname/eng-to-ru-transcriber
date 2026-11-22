@@ -9,13 +9,18 @@ from dsl_translator import build_rules
 SCRIPT_DIR = Path(__file__).parent
 PROJECT_ROOT = SCRIPT_DIR.parent
 DATA_SRC = PROJECT_ROOT / "data_src"
-DATA_DIR = PROJECT_ROOT / "src" / "eng_to_ru_transcriber" / "data"
+DATA_PKL = PROJECT_ROOT / "src" / "eng_to_ru_transcriber" / "data"
+
+# Источник в data_src/ → артефакт в src/.../data/
+RULES = (
+    "default_adaptation",
+    #"standard_adaptation",
+)
 
 
 def compile_dsl_rules(source_file: Path, output_file: Path) -> None:
     if not source_file.exists():
-        print(f"❌ Исходник не найден: {source_file}")
-        return
+        raise FileNotFoundError(f"Исходник не найден: {source_file}")
 
     spec = spec_from_file_location("rules_module", str(source_file))
     module = module_from_spec(spec)
@@ -33,9 +38,10 @@ def compile_dsl_rules(source_file: Path, output_file: Path) -> None:
 
 
 if __name__ == "__main__":
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    DATA_PKL.mkdir(parents=True, exist_ok=True)
 
-    compile_dsl_rules(
-        DATA_SRC / "ipa_to_ru_adaptation.py",
-        DATA_DIR / "ipa_to_ru_adaptation.pkl",
-    )
+    for name in RULES:
+        compile_dsl_rules(
+            DATA_SRC / f"{name}.py",
+            DATA_PKL / f"{name}.pkl",
+        )

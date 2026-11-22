@@ -27,11 +27,9 @@ def run_pipeline() -> None:
 
     t = Transcriber()
     print(f"📦 Создан: {t}")
-
     result = t.transcribe(raw_text)
     print(f"📦 После транслитерации: {t}")
-
-    print("\n✅ Результат (RU):")
+    print("\n✅ Результат (default):")
     print(result)
 
     OUTPUT_PATH.write_text(result, encoding="utf-8")
