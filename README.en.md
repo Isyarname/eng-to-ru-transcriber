@@ -11,7 +11,6 @@ Built for instant Cyrillic transcription of English names, usernames, brands, an
 - **Practical transcription:** adapts pronunciation to Russian orthography rules rather than doing naive letter-by-letter transliteration.
 - **100% offline & lightweight:** unlike cloud APIs or neural models, requires no internet, GPU, or slow model loading — its only dependency ([`crispy-ipa`](https://github.com/Isyarname/crispy-ipa)) is pure Python.
 - **Fast:** about 10x faster than `ru-normalizr`.
-- **Deterministic:** the same word always yields the exact same result.
 - **Universal custom vocabulary:** override pronunciations for specific names or roots using either Cyrillic or IPA symbols.
 
 *(See [Experiments](https://github.com/Isyarname/eng-to-ru-transcriber/blob/main/docs/EXPERIMENTS.md) for a detailed comparison with other G2P and normalization tools).*
