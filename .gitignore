@@ -44,6 +44,7 @@ output_text.txt
 compiled_rules.json
 data/text.txt
 structure.txt
+*.patch
 
 # Исходники словарей не нужны в пакете
 src/eng_to_ru_transcriber/data/*.txt

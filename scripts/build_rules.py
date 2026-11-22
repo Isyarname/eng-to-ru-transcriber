@@ -36,10 +36,6 @@ if __name__ == "__main__":
     DATA_DIR.mkdir(parents=True, exist_ok=True)
 
     compile_dsl_rules(
-        DATA_SRC / "transliteration_rules.py",
-        DATA_DIR / "transliteration_rules.pkl",
-    )
-    compile_dsl_rules(
-        DATA_SRC / "eng_to_ipa_rules.py",
-        DATA_DIR / "eng_to_ipa_rules.pkl",
+        DATA_SRC / "ipa_to_ru_adaptation.py",
+        DATA_DIR / "ipa_to_ru_adaptation.pkl",
     )

@@ -27,7 +27,7 @@ DIST_DIR = PROJECT_ROOT / "dist"
 # Источник в data_src/ → артефакт в src/.../data/
 RULES_MAP = {
     "en_dict.txt": "en_dict.pkl",
-    "transliteration_rules.py": "transliteration_rules.pkl",
+    "ipa_to_ru_adaptation.py": "ipa_to_ru_adaptation.pkl",
     "eng_to_ipa_rules.py": "eng_to_ipa_rules.pkl",
 }
 
