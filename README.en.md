@@ -4,30 +4,22 @@
 
 A lightweight Python library for quick and deterministic practical transcription of English words using the Russian alphabet.
 
-## Why this exists
+## Features & Use Cases
 
-**This library is built for:**
-- **Transcribing names, usernames, brand names, and specific technical terms** (e.g., *Daenerys*, *MacBook*, *Kubernetes*).
-- **Fast TTS pipelines**, where instant, offline processing without heavy ML models is critical.
+Built for instant Cyrillic transcription of English names, usernames, brands, and technical terms (including fast text preprocessing for TTS pipelines):
 
-Modern translation tools are powerful, but they are overkill for simple tasks:
-- **Cloud APIs** (like Google Translate) require an internet connection and have rate limits.
-- **Neural networks** are heavy, slow to initialize, and can produce unpredictable results.
+- **Practical transcription:** adapts pronunciation to Russian orthography rules rather than doing naive letter-by-letter transliteration.
+- **100% offline & lightweight:** unlike cloud APIs or neural models, requires no internet, GPU, or slow model loading — its only dependency (`crispy-ipa`) is pure Python.
+- **Fast:** about 10x faster than `ru-normalizr`.
+- **Deterministic:** the same word always yields the exact same result.
+- **Universal custom vocabulary:** override pronunciations for specific names or roots using either Cyrillic or IPA symbols.
 
-Sometimes you just need to instantly write English names or terms using the Russian alphabet without waiting for models to load. Existing G2P and normalization packages were tested for this task and found lacking. You can read the detailed comparison in [Experiments](https://github.com/Isyarname/eng-to-ru-transcriber/blob/main/docs/EXPERIMENTS.md).
+*(See [Experiments](https://github.com/Isyarname/eng-to-ru-transcriber/blob/main/docs/EXPERIMENTS.md) for a detailed comparison with other G2P and normalization tools).*
 
 ## Limitations
 
 - **Context-free:** The library does not perform Part-of-Speech (POS) tagging or syntactic analysis. For homographs with multiple pronunciations (like *read* or *use*), it will use the first dictionary entry.
 - **Not a translator:** It transcribes *sound*, not *meaning*.
-
-## Features
-
-- **Practical transcription:** adapts IPA pronunciation to match Russian orthography rules, rather than just letter-by-letter replacement.
-- **Lightweight & 100% offline:** no heavy ML models or cloud APIs (depends only on pure-Python `crispy-ipa`). Works instantly.
-- **Deterministic:** the same word always yields the exact same result.
-- **Fast and accurate:** About 10 times faster than `ru-normalizr` on real text, with superior handling of English slang, names, and abbreviations.
-- **Universal custom vocabulary:** define overrides directly in Cyrillic or using IPA symbols.
 
 ## Installation
 
@@ -53,7 +45,7 @@ print(t.transcribe("Hello, URL!"))
 
 ### Custom Vocabulary
 
-You can easily override the pronunciation of specific words or roots (in either Cyrillic or IPA). This is useful for names, brands, and technical terms not present in the built-in (`crispy-ipa`) dictionary.
+You can easily override the pronunciation of specific words or roots (in either Cyrillic or IPA). This is useful for names, brands, and technical terms (not present in the built-in `crispy-ipa` dictionary).
 
 ```python
 from eng_to_ru_transcriber import Transcriber
