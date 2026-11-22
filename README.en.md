@@ -24,15 +24,14 @@ Sometimes you just need to instantly write English names or terms using the Russ
 ## Features
 
 - **Practical transcription:** adapts IPA pronunciation to match Russian orthography rules, rather than just letter-by-letter replacement.
-- **Vowel length indication:** long vowels are marked with an acute accent (e.g., `и́`, `у́`), preserving phonetic accuracy.
-- **Zero dependencies & 100% offline:** no heavy ML models or cloud APIs. Works instantly.
+- **Lightweight & 100% offline:** no heavy ML models or cloud APIs (depends only on pure-Python `crispy-ipa`). Works instantly.
 - **Deterministic:** the same word always yields the exact same result.
-- **Fast and accurate:** Processes ~100,000 words/sec. About 10 times faster than `ru-normalizr` on real text, with superior handling of English slang, names, and abbreviations.
-- **Custom vocabulary:** easily teach the library how to transcribe your specific character names, brands, or terms.
+- **Fast and accurate:** About 10 times faster than `ru-normalizr` on real text, with superior handling of English slang, names, and abbreviations.
+- **Universal custom vocabulary:** define overrides directly in Cyrillic or using IPA symbols.
 
 ## Installation
 
-Requires Python 3.9 or higher.
+Requires Python 3.10 or higher.
 
 ```bash
 pip install eng-to-ru-transcriber
@@ -47,14 +46,14 @@ from eng_to_ru_transcriber import Transcriber
 
 t = Transcriber()
 print(t.transcribe("Hello, URL!")) 
-# → халоу, ю-ар-эл!
+# → хэлоу, ю-ар-эл!
 ```
 
 *Abbreviations (like URL) are automatically detected and read letter-by-letter.*
 
 ### Custom Vocabulary
 
-You can easily override the pronunciation of specific words. This is especially useful for names, brands, and technical terms that are not in the built-in dictionary.
+You can easily override the pronunciation of specific words or roots (in either Cyrillic or IPA). This is useful for names, brands, and technical terms not present in the built-in (`crispy-ipa`) dictionary.
 
 ```python
 from eng_to_ru_transcriber import Transcriber
@@ -64,15 +63,15 @@ text = "The dockerizer is dockerizing the docker image."
 # Without vocabulary
 t1 = Transcriber()
 print(t1.transcribe(text))
-# → дэ дакэрайзэ́ из дакэрайзинг дэ дакэр имэдж.
+# → дэ дакэрайзэр из дакэрайзинг дэ дакэр имэдж.
 
 # With vocabulary: teach the library a new root "docker"
 t2 = Transcriber(custom_vocabulary={"docker": "докер"})
 print(t2.transcribe(text))
-# → дэ докерайзэ́ из докерайзинг дэ докер имэдж.
+# → дэ докерайзэр из докерайзинг дэ докер имэдж.
 ```
 
-The words `dockerizer` and `dockerizing` are not in the built-in dictionary. However, the engine automatically splits them into the root `docker` and suffixes (`izer`, `izing`), applying your custom pronunciation to the root and transcription rules to the endings.
+The words `dockerizer` and `dockerizing` are not in the built-in dictionary. However, the `crispy-ipa` engine automatically splits them into the root `docker` and suffixes (`izer`, `izing`), applying your custom pronunciation to the root and transcription rules to the endings.
 
 ## Development & Testing
 
@@ -85,7 +84,7 @@ python examples/basic_usage.py
 
 ## Data Sources
 
-English IPA data is derived from [open-dict-data/ipa-dict](https://github.com/open-dict-data/ipa-dict) (MIT License, Copyright © 2016 dohliam).
+Intermediate IPA transcription is powered by [crispy-ipa](https://pypi.org/project/crispy-ipa), which uses [open-dict-data/ipa-dict](https://github.com/open-dict-data/ipa-dict) (MIT License).
 
 ## License
 

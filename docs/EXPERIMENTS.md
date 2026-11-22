@@ -33,7 +33,7 @@ parseXMLData
 
 </details>
 
-### eng-to-ru-transcriber (гибридный движок)
+### eng-to-ru-transcriber (crispy-ipa)
 
 <details>
 <summary>Показать сгенерированный текст</summary>
