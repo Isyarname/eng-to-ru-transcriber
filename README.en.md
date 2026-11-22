@@ -45,8 +45,6 @@ print(t.transcribe("Hello, URL!"))
 
 ### Custom Vocabulary
 
-You can easily override the pronunciation of specific words or roots (in either Cyrillic or IPA). This is useful for names, brands, and technical terms (not present in the built-in `crispy-ipa` dictionary).
-
 ```python
 from eng_to_ru_transcriber import Transcriber
 
