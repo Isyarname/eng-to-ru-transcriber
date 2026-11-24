@@ -72,10 +72,6 @@ pip install -e .
 python examples/basic_usage.py
 ```
 
-## Источники данных
-
-Промежуточная транскрипция в МФА выполняется с помощью библиотеки [crispy-ipa](https://github.com/Isyarname/crispy-ipa), использующей словарь [open-dict-data/ipa-dict](https://github.com/open-dict-data/ipa-dict) (лицензия MIT).
-
 ## Лицензия
 
 MIT

@@ -71,10 +71,6 @@ pip install -e .
 python examples/basic_usage.py
 ```
 
-## Data Sources
-
-Intermediate IPA transcription is powered by [crispy-ipa](https://github.com/Isyarname/crispy-ipa), which uses [open-dict-data/ipa-dict](https://github.com/open-dict-data/ipa-dict) (MIT License).
-
 ## License
 
 MIT
