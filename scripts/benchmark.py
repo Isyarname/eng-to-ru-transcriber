@@ -94,7 +94,7 @@ def main() -> None:
     if t_ru:
         try:
             res_ru = t_ru.normalize(raw_text)
-            print("\n[ru-normalizr] (с удаленными '+', но сохраненными ударениями):")
+            print("\n[ru-normalizr] (с удаленными '+'):")
             print(clean_normalizr(res_ru))
         except Exception as e:
             print(f"\n❌ Ошибка выполнения ru-normalizr: {e}")
