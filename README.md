@@ -71,7 +71,3 @@ print(t2.transcribe(text))
 pip install -e .
 python examples/basic_usage.py
 ```
-
-## Лицензия
-
-MIT

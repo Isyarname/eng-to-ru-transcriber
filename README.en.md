@@ -70,7 +70,3 @@ To check that the library works correctly in your environment, run the built-in 
 pip install -e .
 python examples/basic_usage.py
 ```
-
-## License
-
-MIT
