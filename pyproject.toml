@@ -58,7 +58,3 @@ Issues = "https://github.com/Isyarname/eng-to-ru-transcriber/issues"
 # src-layout: setuptools ищет пакеты внутри src/
 [tool.setuptools.packages.find]
 where = ["src"]
-
-# Включаем ресурсы в wheel
-[tool.setuptools.package-data]
-"eng_to_ru_transcriber" = ["data/*.pkl"]
