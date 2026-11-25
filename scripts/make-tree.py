@@ -17,41 +17,34 @@ IGNORE_FILES = {
 #   ("head", N, comment)               → show first N children, then `...`
 #   ("inline_child",)                  → if exactly one child dir, show `name/child/`
 TREE_MODES = {
-    "data_src": ("collapse", "Source rules & dictionary (not shipped)"),
     "docs": ("collapse", "Documentation"),
     "examples": ("collapse", "Usage examples"),
-    "tests": ("collapse", "Pytest suite"),
-    "scripts": ("head", 2, "Build & release tools (not shipped)"),
+    "scripts": ("head", 4, "Dev & release tools (not shipped)"),
     "src": ("inline_child",),
-    "src/eng_to_ru_transcriber/data": ("collapse_as", "/*.pkl", "Compiled runtime data"),
 }
 
 COMMENTS = {
-    "scripts/build_rules.py": "Compiles data_src/*.py → data/*.pkl",
-    "scripts/convert_dict.py": "Compiles data_src/en_dict.txt → data/en_dict.pkl",
     "src/eng_to_ru_transcriber": "The library (this is what ships to PyPI)",
     "src/eng_to_ru_transcriber/__init__.py": "Public API",
     "src/eng_to_ru_transcriber/transcriber.py": "Orchestrator (entry point)",
-    "src/eng_to_ru_transcriber/eng_to_ipa_hybrid.py": "EN → IPA (dictionary + rules)",
-    "src/eng_to_ru_transcriber/rule_based_ipa.py": "Applies EN → IPA rules",
-    "src/eng_to_ru_transcriber/ipa_to_ru.py": "Applies IPA → Cyrillic rules",
-    "src/eng_to_ru_transcriber/rule_engine.py": "Shared regex/literal rule executor",
+    "src/eng_to_ru_transcriber/rule_engine.py": "Applies compiled IPA → Cyrillic rules",
+    "src/eng_to_ru_transcriber/dsl_compiler.py": "DSL macro expander & rule compiler",
+    "src/eng_to_ru_transcriber/default_adaptation_rules.py": "IPA → Cyrillic rule definitions (DSL source)",
     "pyproject.toml": "Metadata, build config",
 }
 
 CUSTOM_ORDER = {
     "scripts": [
-        "build_rules.py", "convert_dict.py",
-        "benchmark.py", "dsl_translator.py", "make-tree.py", "pre_release.py",
+        "benchmark.py", "make-tree.py", "pre_release.py",
     ],
     "src/eng_to_ru_transcriber": [
-        "data", "__init__.py", "transcriber.py",
-        "eng_to_ipa_hybrid.py", "rule_based_ipa.py", "ipa_to_ru.py", "rule_engine.py",
+        "__init__.py", "transcriber.py",
+        "rule_engine.py", "dsl_compiler.py", "default_adaptation_rules.py",
     ],
 }
 
 MERGES = [
-    ("README.md", "README.ru.md", "README.md / README.ru.md"),
+    ("README.md", "README.en.md", "README.md / README.en.md"),
 ]
 
 
@@ -165,7 +158,8 @@ def align_comments(lines: list[str], min_gap: int = 2) -> list[str]:
     for line in lines:
         content, sep, comment = line.partition("  # ")
         if sep:
-            parsed.append((content.rstrip(), comment.rstrip()))
+            cm = comment.rstrip()
+            parsed.append((content.rstrip(), cm or None))
         else:
             parsed.append((line.rstrip(), None))
 
@@ -184,7 +178,7 @@ def align_comments(lines: list[str], min_gap: int = 2) -> list[str]:
 if __name__ == "__main__":
     script_dir = os.path.dirname(os.path.abspath(__file__))
     project_root = os.path.dirname(script_dir)
-    output_path = os.path.join(project_root, "structure.txt")
+    output_path = os.path.join(script_dir, "structure.txt")
 
     lines = [f"{os.path.basename(project_root)}/"]
     render(project_root, prefix="", relpath="", lines=lines)
