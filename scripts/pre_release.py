@@ -11,15 +11,17 @@ import sys
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).parent.parent
-DATA_SRC = PROJECT_ROOT / "data_src"
-DATA_PKL = PROJECT_ROOT / "src" / "eng_to_ru_transcriber" / "data"
+PACKAGE_DIR = PROJECT_ROOT / "src" / "eng_to_ru_transcriber"
 PYPROJECT = PROJECT_ROOT / "pyproject.toml"
 CHANGELOG = PROJECT_ROOT / "docs" / "CHANGELOG.md"
 DIST_DIR = PROJECT_ROOT / "dist"
 
-RULES = (
-    "default_adaptation",
-    #"standard_adaptation",
+# Модули, без которых импорт transcriber.py не работает.
+REQUIRED_MODULES = (
+    "transcriber.py",
+    "rule_engine.py",
+    "dsl_compiler.py",
+    "default_adaptation_rules.py",
 )
 
 README_FILES = ("README.md", "README.en.md")
@@ -76,24 +78,23 @@ def check_versions() -> tuple[bool, str | None]:
     return True, pyproject_v
 
 
-def check_rules_compiled() -> bool:
+def check_rules_source() -> bool:
+    """Проверяет, что правила и компилятор на месте и непустые.
+
+    Правила компилируются при импорте transcriber.py, поэтому отсутствие
+    любого из этих файлов ломает импорт пакета, а не сборку.
+    """
     ok = True
-    for name in RULES:
-        src = DATA_SRC / f"{name}.py"
-        pkl = DATA_PKL / f"{name}.pkl"
-        if not src.exists():
-            _err(f"Нет источника: {src}")
+    for name in REQUIRED_MODULES:
+        path = PACKAGE_DIR / name
+        if not path.exists():
+            _err(f"Нет модуля: {path}")
             ok = False
-            continue
-        if not pkl.exists():
-            _err(f"Нет .pkl: {pkl}")
-            ok = False
-            continue
-        if pkl.stat().st_mtime < src.stat().st_mtime:
-            _warn(f"{name}.pkl старше {name}.py — пересобери через scripts/build_rules.py")
+        elif path.stat().st_size == 0:
+            _err(f"Пустой модуль: {path}")
             ok = False
     if ok:
-        _ok(f"Все .pkl актуальны ({len(RULES)} шт.)")
+        _ok(f"Модули на месте ({len(REQUIRED_MODULES)} шт.)")
     return ok
 
 
@@ -223,7 +224,7 @@ def main() -> None:
     if not ok or version is None:
         sys.exit(1)
 
-    if not check_rules_compiled():
+    if not check_rules_source():
         sys.exit(1)
 
     if not check_changelog(version):
